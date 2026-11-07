@@ -1,0 +1,3 @@
+# Installed as /etc/cron.d/vps-links. nginx serves the clone's site/ folder
+# directly, so a pull is all an update needs.
+* * * * * root cd /opt/vps-links && git pull -q --ff-only >> /var/log/vps-links-update.log 2>&1
