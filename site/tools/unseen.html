@@ -1,0 +1,2698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unseen — TMDb Watched Filter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1c1a16;
+    --bg-card: #262319;
+    --bg-card-hover: #2d2a20;
+    --line: #3a3527;
+    --accent: #e2a63b;
+    --accent-dim: #a97e30;
+    --seen: #6b9c8f;
+    --remove: #b8563f;
+    --text: #ece6d6;
+    --text-dim: #948d7a;
+    --text-faint: #625c4c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  .sprockets{
+    height:14px;
+    background-image: repeating-linear-gradient(90deg, var(--bg) 0px, var(--bg) 10px, var(--line) 10px, var(--line) 16px);
+    background-color: #0f0e0c;
+    position:relative;
+  }
+  .sprockets::before, .sprockets::after{
+    content:"";
+    position:absolute;
+    top:3px;
+    left:0; right:0;
+    height:8px;
+    background-image: repeating-linear-gradient(90deg, transparent 0px, transparent 4px, var(--bg) 4px, var(--bg) 12px);
+  }
+  header{
+    padding:28px 32px 20px;
+    background:#0f0e0c;
+    border-bottom:1px solid var(--line);
+  }
+  .header-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  h1{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:44px;
+    letter-spacing:3px;
+    color:var(--accent);
+    margin:0;
+    line-height:1;
+  }
+  h1 span{color:var(--text-dim); font-size:20px; letter-spacing:2px; display:block; font-family:'IBM Plex Mono',monospace; margin-top:4px;}
+  .key-box{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .key-box input{
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:4px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    width:220px;
+  }
+  .key-box input:focus{outline:1px solid var(--accent); border-color:var(--accent);}
+  .key-box select{
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:4px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+  }
+  .key-box a{color:var(--accent); text-decoration:none;}
+  .key-box a:hover{text-decoration:underline;}
+
+  main{max-width:1200px; margin:0 auto; padding:28px 32px 80px;}
+
+  .controls{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-bottom:24px;
+  }
+  .type-toggle{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .type-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:7px 18px;
+    border-radius:20px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:0.5px;
+  }
+  .type-btn.active{background:var(--text); color:var(--bg); border-color:var(--text);}
+  .type-btn:hover:not(.active){border-color:var(--accent-dim); color:var(--text);}
+
+  .tab{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:9px 16px;
+    border-radius:20px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:0.3px;
+  }
+  .tab.active{background:var(--accent); border-color:var(--accent); color:#1c1a16;}
+  .tab:hover:not(.active){border-color:var(--accent-dim); color:var(--text);}
+
+  .search-row{display:flex; gap:8px; flex:1; min-width:240px;}
+  .rating-filter{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .rating-filter input{width:56px; text-align:center;}
+  .rating-filter span, .year-filter span{color:var(--text-faint);}
+  .year-filter{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .year-filter input{width:64px; text-align:center;}
+  .year-filter select{padding:10px 6px; font-size:12px;}
+  .sort-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .sort-toggle #resortBtn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:8px 10px;
+    border-radius:6px;
+    font-size:13px;
+    cursor:pointer;
+    line-height:1;
+  }
+  .sort-toggle #resortBtn:hover{border-color:var(--accent); color:var(--accent);}
+  input[type=text], select{
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:6px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+  }
+  input[type=text]{flex:1;}
+  input[type=text]:focus, select:focus{outline:none; border-color:var(--accent);}
+  button.primary{
+    background:var(--accent);
+    color:#1c1a16;
+    border:none;
+    padding:10px 18px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    letter-spacing:0.3px;
+  }
+  button.primary:hover{background:#eab655;}
+  button.primary:disabled{opacity:0.5; cursor:default;}
+  .skip-all-btn{
+    background:none;
+    border:1px solid var(--remove);
+    color:var(--remove);
+    padding:10px 18px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:0.3px;
+    font-family:'Inter',sans-serif;
+  }
+  .skip-all-btn:hover{background:var(--remove); color:#ece6d6;}
+
+  .status-line{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text-faint);
+    margin-bottom:18px;
+    min-height:16px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(170px,1fr));
+    gap:18px;
+  }
+  .card{
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    transition:transform 0.15s ease, border-color 0.15s ease;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+  }
+  .card:hover{transform:translateY(-3px); border-color:var(--accent-dim); background:var(--bg-card-hover);}
+  .card.unreleased{background:#3d2f12; border:1px solid var(--accent);}
+  .card.unreleased:hover{background:#493a17; border-color:var(--accent);}
+  .card.short-title{background:#1c2a3d; border:1px solid #3d6a99;}
+  .card.short-title:hover{background:#22334a; border-color:#4d84bd;}
+  .poster-wrap{position:relative; aspect-ratio:2/3; background:#0f0e0c; cursor:pointer;}
+  .unreleased-badge{
+    position:absolute; top:8px; left:8px;
+    background:rgba(226,166,59,0.92);
+    color:#1c1a16;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    padding:3px 7px;
+    border-radius:4px;
+  }
+  .type-badge{
+    position:absolute; top:8px; right:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    padding:3px 7px;
+    border-radius:4px;
+    color:#1c1a16;
+  }
+  .type-badge.series-badge{background:rgba(107,156,143,0.92);}
+  .type-badge.short-badge{background:rgba(148,141,122,0.92);}
+  .genre-badge{
+    position:absolute; bottom:8px; left:8px;
+    background:rgba(20,18,15,0.78);
+    color:var(--text-dim);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;
+    font-weight:600;
+    letter-spacing:0.3px;
+    padding:3px 7px;
+    border-radius:4px;
+    max-width:calc(100% - 16px);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .genre-badge:empty{display:none;}
+  .tag-btn.notify:hover{border-color:var(--accent); color:var(--accent); border-style:solid;}
+  .poster-wrap img{width:100%; height:100%; object-fit:cover; display:block;}
+  .no-poster{
+    display:flex; align-items:center; justify-content:center; height:100%;
+    color:var(--text-faint); font-family:'IBM Plex Mono',monospace; font-size:11px; text-align:center; padding:10px;
+  }
+  .card-body{padding:10px 12px 12px; display:flex; flex-direction:column; flex:1;}
+  .card-title{
+    font-weight:600;
+    font-size:13.5px;
+    line-height:1.3;
+    margin:0 0 3px;
+    color:var(--text);
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    min-height:calc(1.3em * 2);
+  }
+  .card-meta{
+    display:flex;
+    align-items:center;
+    flex-wrap:nowrap;
+    gap:4px 6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--text-faint);
+    margin-bottom:10px;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .card-meta .meta-rating{color:var(--accent); flex-shrink:0;}
+  .card-meta .meta-votes{overflow:hidden; text-overflow:ellipsis;}
+  .card-actions{
+    margin-top:auto;
+  }
+  .tag-row{
+    display:flex;
+    gap:4px;
+  }
+  .tag-btn{
+    flex:1;
+    background:none;
+    border:1px dashed var(--line);
+    color:var(--text-faint);
+    padding:6px 0;
+    border-radius:5px;
+    font-size:9.5px;
+    font-family:'IBM Plex Mono',monospace;
+    cursor:pointer;
+    letter-spacing:0.3px;
+  }
+  .tag-btn.seen:hover{border-color:var(--seen); color:var(--seen); border-style:solid;}
+  .tag-btn.watchlist:hover{border-color:var(--accent); color:var(--accent); border-style:solid;}
+  .tag-btn.ignore:hover{border-color:var(--remove); color:var(--remove); border-style:solid;}
+  .copy-link{
+    display:block;
+    width:100%;
+    margin-top:5px;
+    background:none;
+    border:none;
+    color:var(--text-faint);
+    padding:5px 0 0;
+    font-size:10px;
+    font-family:'IBM Plex Mono',monospace;
+    cursor:pointer;
+    text-align:center;
+    letter-spacing:0.3px;
+  }
+  .copy-link:hover{color:var(--accent);}
+
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-faint);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+  }
+
+  .load-more{
+    display:block;
+    margin:28px auto 0;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:10px 22px;
+    border-radius:20px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .load-more:hover{border-color:var(--accent); color:var(--accent);}
+  .stop-btn{border-color:var(--remove); color:var(--remove);}
+  .stop-btn:hover{background:var(--remove); color:#ece6d6;}
+
+  /* Left-side HUD: Show more / Stop / status / check progress */
+  .hud{
+    position:fixed;
+    left:16px; top:50%;
+    transform:translateY(-50%);
+    width:210px;
+    max-height:calc(100vh - 260px);
+    overflow:auto;
+    background:rgba(28,26,22,0.97);
+    backdrop-filter:blur(6px);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    z-index:40;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .hud.empty{display:none;}
+  .hud-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 10px;
+    font-size:10px; letter-spacing:1px; color:var(--text-faint);
+    border-bottom:1px solid var(--line);
+  }
+  .hud.collapsed .hud-head{border-bottom:none;}
+  .hud-head button{
+    background:none; border:none; color:var(--text-dim);
+    cursor:pointer; font-size:14px; line-height:1; padding:0 2px;
+  }
+  .hud.collapsed .hud-body{display:none;}
+  .hud-body{padding:10px; display:flex; flex-direction:column; gap:8px;}
+  .hud .load-more{margin:0; width:100%; padding:8px 10px; font-size:12px;}
+  .hud .status-line{margin:0; min-height:0; text-align:left; line-height:1.4; word-break:break-word;}
+  .hud .status-line:empty{display:none;}
+  .hud-progress{border-top:1px solid var(--line); padding-top:8px; font-size:11px; color:var(--text-dim);}
+  .hud-progress-label{display:flex; justify-content:space-between; gap:6px; margin-bottom:5px;}
+  .hud-progress-bar{height:5px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .hud-progress-fill{height:100%; width:0; background:var(--accent); transition:width 0.2s ease;}
+  .hud-progress.done .hud-progress-fill{background:#6b9c8f;}
+  .hud-progress-sub{margin-top:5px; color:var(--text-faint); font-size:10.5px;}
+  @media (max-width:900px){
+    .hud{left:8px; right:8px; width:auto; top:auto; bottom:130px; transform:none; max-height:40vh;}
+  }
+
+  /* Watched drawer */
+  .drawer-toggle{
+    position:fixed;
+    bottom:24px; right:24px;
+    background:var(--accent);
+    color:#1c1a16;
+    border:none;
+    padding:12px 18px;
+    border-radius:24px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    font-family:'IBM Plex Mono',monospace;
+    z-index:50;
+  }
+  .back-to-top{
+    position:fixed;
+    bottom:24px; left:24px;
+    background:var(--bg-card);
+    color:var(--accent);
+    border:1px solid var(--line);
+    padding:12px 18px;
+    border-radius:24px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    font-family:'IBM Plex Mono',monospace;
+    z-index:50;
+    display:none;
+  }
+  .back-to-top:hover{border-color:var(--accent); background:var(--bg-card-hover);}
+  .quick-export-btn{
+    background:var(--bg-card);
+    color:var(--text-dim);
+    border:1px solid var(--line);
+  }
+  .quick-export-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .drawer{
+    position:fixed;
+    top:0; right:-380px;
+    width:360px;
+    height:100%;
+    background:#0f0e0c;
+    border-left:1px solid var(--line);
+    padding:24px 20px;
+    overflow-y:auto;
+    transition:right 0.25s ease;
+    z-index:60;
+  }
+  .drawer.open{right:0;}
+  .drawer h2{
+    font-family:'Bebas Neue', sans-serif;
+    color:var(--accent);
+    letter-spacing:2px;
+    font-size:24px;
+    margin:0 0 4px;
+  }
+  .drawer .sub{color:var(--text-faint); font-family:'IBM Plex Mono',monospace; font-size:11px; margin-bottom:14px;}
+  .drawer-tabs{display:flex; gap:6px; margin-bottom:16px;}
+  .drawer-tab{
+    flex:1;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:7px 0;
+    border-radius:16px;
+    font-size:11px;
+    font-family:'IBM Plex Mono',monospace;
+    cursor:pointer;
+  }
+  .drawer-tab.active{background:var(--accent); border-color:var(--accent); color:#1c1a16; font-weight:600;}
+  .drawer-tab.active[data-status="watchlist"]{background:var(--accent); border-color:var(--accent);}
+  .drawer-tab.active[data-status="notify"]{background:#c98f2b; border-color:#c98f2b; color:#1c1a16;}
+  .drawer-tab.active[data-status="ignore"]{background:var(--remove); border-color:var(--remove); color:#ece6d6;}
+  .drawer-tab.active[data-status="seen"]{background:var(--seen); border-color:var(--seen); color:#1c1a16;}
+  .drawer-close{
+    position:absolute; top:20px; right:18px;
+    background:none; border:none; color:var(--text-dim); font-size:20px; cursor:pointer;
+  }
+  .watched-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .watched-item .wi-title{color:var(--text); text-decoration:none;}
+  .watched-item .wi-title:hover{color:var(--accent); text-decoration:underline;}
+  .watched-item .wi-year{color:var(--text-faint); font-family:'IBM Plex Mono',monospace; font-size:11px; margin-left:6px;}
+  .watched-item button{
+    background:none; border:none; color:var(--remove); cursor:pointer; font-size:11px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .watched-item button:hover{text-decoration:underline;}
+  .drawer-show-more{
+    display:block;
+    width:100%;
+    margin-top:12px;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:9px 0;
+    border-radius:6px;
+    font-size:12px;
+    font-family:'IBM Plex Mono',monospace;
+    cursor:pointer;
+  }
+  .drawer-show-more:hover{border-color:var(--accent); color:var(--accent);}
+  .drawer-actions{display:flex; gap:8px; margin-top:18px;}
+  .notify-controls{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:14px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+  }
+  .notify-controls button{
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:8px 10px;
+    border-radius:6px;
+    font-size:11.5px;
+    font-family:'IBM Plex Mono',monospace;
+    cursor:pointer;
+  }
+  .notify-controls button:hover{border-color:var(--accent); color:var(--accent);}
+  .notify-sub{color:var(--text-faint); font-family:'IBM Plex Mono',monospace; font-size:10.5px;}
+  .type-filter-row{display:flex; gap:14px; flex-wrap:wrap;}
+  .list-category-row{display:flex; gap:8px; flex-wrap:wrap;}
+  .list-cat-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:8px 16px;
+    border-radius:16px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .list-cat-btn.active{background:var(--text); color:var(--bg); border-color:var(--text);}
+  .list-cat-btn:hover:not(.active){border-color:var(--accent-dim); color:var(--text);}
+  .list-search-row{display:flex; align-items:center; gap:12px; flex:1; min-width:220px;}
+  .list-search-row input[type=text]{flex:1; min-width:160px;}
+  .az-index{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-bottom:14px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+  }
+  .az-letter{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-faint);
+    width:26px; height:26px;
+    border-radius:4px;
+    font-size:11px;
+    font-family:'IBM Plex Mono',monospace;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .az-letter:hover{border-color:var(--accent); color:var(--accent);}
+  .az-letter.az-empty{opacity:0.25; cursor:default; pointer-events:none;}
+  .type-filter-check{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--text-dim);
+    cursor:pointer;
+  }
+  .type-filter-check input{accent-color:var(--accent); cursor:pointer;}
+  .availability-banner{
+    max-width:1200px;
+    margin:0 auto 18px;
+    padding:14px 18px;
+    background:rgba(226,166,59,0.12);
+    border:1px solid var(--accent-dim);
+    border-radius:8px;
+    color:var(--text);
+    font-size:13.5px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+  .availability-banner button{
+    background:none;
+    border:none;
+    color:var(--text-faint);
+    font-size:18px;
+    cursor:pointer;
+    line-height:1;
+  }
+  .selection-bar{
+    position:fixed;
+    top:20px; left:50%;
+    transform:translateX(-50%);
+    background:var(--bg-card);
+    border:1px solid var(--accent);
+    border-radius:24px;
+    padding:10px 12px 10px 18px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.5);
+    display:flex;
+    align-items:center;
+    gap:12px;
+    z-index:200;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--text);
+  }
+  .selection-bar button{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:700;
+    padding:8px 16px;
+    border-radius:16px;
+    cursor:pointer;
+    border:none;
+  }
+  .selection-bar #skipSelectedBtn{background:var(--remove); color:#ece6d6;}
+  .selection-bar #skipSelectedBtn:hover{background:#c9634a;}
+  .selection-bar #clearSelectionBtn{background:none; border:1px solid var(--line); color:var(--text-dim);}
+  .selection-bar #clearSelectionBtn:hover{border-color:var(--accent); color:var(--accent);}
+  .card.selected{outline:3px solid var(--accent); outline-offset:-1px;}
+  .drawer-actions button, .drawer-actions label{
+    flex:1;
+    text-align:center;
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:8px 0;
+    border-radius:6px;
+    font-size:11.5px;
+    font-family:'IBM Plex Mono',monospace;
+    cursor:pointer;
+  }
+  .drawer-actions button:hover, .drawer-actions label:hover{border-color:var(--accent); color:var(--accent);}
+  .drawer-actions input[type=file]{display:none;}
+
+  @media (max-width:600px){
+    header{padding:20px 18px;}
+    main{padding:20px 18px 60px;}
+    h1{font-size:32px;}
+    .drawer{width:100%; right:-100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="sprockets"></div>
+<header>
+  <div class="header-row">
+    <h1>UNSEEN<span>watched-aware TMDb browser</span></h1>
+    <div class="key-box">
+      <label for="apiKey">TMDb key:</label>
+      <input type="text" id="apiKey" placeholder="paste your API key">
+      <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">get one →</a>
+    </div>
+  </div>
+</header>
+<div class="sprockets"></div>
+
+<main>
+  <div class="availability-banner" id="availabilityBanner" style="display:none;"></div>
+  <div class="selection-bar" id="selectionBar" style="display:none;">
+    <span id="selectionCount">0 selected</span>
+    <button id="skipSelectedBtn">Skip Selected</button>
+    <button id="clearSelectionBtn">Clear</button>
+  </div>
+  <div class="availability-banner" id="storageErrorBanner" style="display:none; background:rgba(184,86,63,0.15); border-color:var(--remove);"></div>
+  <div class="type-toggle">
+    <button class="type-btn active" data-type="movie">Movies</button>
+    <button class="type-btn" data-type="tv">TV Shows</button>
+  </div>
+  <div class="controls">
+    <button class="tab active" data-mode="trending">Trending</button>
+    <button class="tab" data-mode="discover">Discover</button>
+    <button class="tab" data-mode="search">Search</button>
+    <button class="tab" data-mode="watchlist">Lists</button>
+    <select id="genreSelect"></select>
+    <select id="genreSelect2">
+      <option value="">+ second genre</option>
+    </select>
+    <select id="languageSelect" style="display:inline-block;">
+      <option value="en|ja|ko|cs|sk">All eligible languages</option>
+      <option value="en">English</option>
+      <option value="ja">Japanese</option>
+      <option value="ko">Korean</option>
+      <option value="cs">Czech</option>
+      <option value="sk">Slovak</option>
+    </select>
+    <div class="search-row" id="searchRow" style="display:none;">
+      <input type="text" id="searchInput" placeholder="Search movie titles...">
+    </div>
+    <div class="rating-filter">
+      <label for="minRating">★</label>
+      <input type="number" id="minRating" min="0" max="10" step="0.5" placeholder="min">
+      <span>–</span>
+      <input type="number" id="maxRating" min="0" max="10" step="0.5" placeholder="max" title="Upper rating limit — leave empty for no ceiling">
+    </div>
+    <div class="rating-filter">
+      <label for="minVotes">Votes</label>
+      <input type="number" id="minVotes" min="0" step="10" placeholder="min" title="Filters out titles with too few votes for the rating to be meaningful. TMDb's own Top Rated list uses ~200-300.">
+      <span>–</span>
+      <input type="number" id="maxVotes" min="0" step="10" placeholder="max" title="Upper vote-count limit — e.g. cap it to surface lesser-known titles. Leave empty for no ceiling.">
+    </div>
+    <div class="year-filter">
+      <label for="yearMin">Year</label>
+      <input type="number" id="yearMin" min="1900" max="2100" placeholder="from">
+      <span>–</span>
+      <input type="number" id="yearMax" min="1900" max="2100" placeholder="to">
+    </div>
+    <div class="sort-toggle">
+      <label for="sortOrder">Sort:</label>
+      <select id="sortOrder">
+        <option value="">As loaded</option>
+        <option value="votes">Most voted first</option>
+        <option value="rating">Highest rated first</option>
+        <option value="date">Newest first</option>
+        <option value="alpha">Alphabetical (A-Z)</option>
+      </select>
+      <button id="resortBtn" title="Re-apply the current sort (useful if you picked the same option again)">↻</button>
+    </div>
+    <div class="rating-filter">
+      <label for="batchSize">Per click</label>
+      <input type="number" id="batchSize" min="5" max="500" step="5" value="40" title="How many new titles Show More tries to gather each time you click it">
+    </div>
+    <div class="list-category-row" id="listCategoryRow" style="display:none;">
+      <button class="list-cat-btn active" data-cat="watchlist">Watchlist</button>
+      <button class="list-cat-btn" data-cat="seen">Seen</button>
+      <button class="list-cat-btn" data-cat="notify">Notify</button>
+      <button class="list-cat-btn" data-cat="ignore">Ignored</button>
+    </div>
+    <div class="list-search-row" id="listSearchRow" style="display:none;">
+      <input type="text" id="listSearchInput" placeholder="Search titles...">
+      <label class="type-filter-check"><input type="checkbox" id="listSearchExclude"> Exclude matches</label>
+    </div>
+    <div class="type-filter-row" id="watchlistTypeFilter" style="display:none;">
+      <label class="type-filter-check"><input type="checkbox" id="filterMovies" checked> Movies</label>
+      <label class="type-filter-check"><input type="checkbox" id="filterSeries" checked> Series</label>
+      <label class="type-filter-check"><input type="checkbox" id="filterShorts" checked> Shorts</label>
+      <label class="type-filter-check"><input type="checkbox" id="filterUnreleased" checked> Unreleased</label>
+    </div>
+    <div class="type-filter-row" id="browseTypeFilter">
+      <label class="type-filter-check" title="Hides titles TMDb doesn't yet show as released"><input type="checkbox" id="browseShowUnreleased" checked> Unreleased</label>
+      <label class="type-filter-check" title="Runtime isn't in the browse results, only the individual title page — so this filters out shorts as they're confirmed while scrolling, not before they first appear"><input type="checkbox" id="browseShowShorts" checked> Shorts</label>
+      <label class="type-filter-check" title="Full-length, released titles — the default category"><input type="checkbox" id="browseShowRegular" checked> Regular</label>
+    </div>
+    <button class="primary" id="goBtn">Go</button>
+    <button class="skip-all-btn" id="skipAllBtn" style="display:none;" title="Mark every title currently displayed as SKIP">Skip all displayed</button>
+  </div>
+
+  <div class="az-index" id="azIndex" style="display:none;"></div>
+  <div class="grid" id="grid"></div>
+  <div class="hud empty" id="hud">
+    <div class="hud-head"><span>STATUS</span><button id="hudCollapse" title="Collapse / expand">–</button></div>
+    <div class="hud-body">
+      <button class="load-more" id="loadMore" style="display:none;">Show more</button>
+      <button class="load-more stop-btn" id="stopBtn" style="display:none;">Stop</button>
+      <button class="load-more" id="listShowMoreBtn" style="display:none;">Show more</button>
+      <div class="status-line" id="statusLine"></div>
+      <div class="hud-progress" id="checkProgress" style="display:none;">
+        <div class="hud-progress-label"><span>Shorts / unreleased</span><span id="checkProgressCount">0 / 0</span></div>
+        <div class="hud-progress-bar"><div class="hud-progress-fill" id="checkProgressFill"></div></div>
+        <div class="hud-progress-sub" id="checkProgressSub"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<button class="drawer-toggle" id="drawerToggle">LISTS (<span id="totalTagCount">0</span>)</button>
+<button class="drawer-toggle quick-export-btn" id="quickExportBtn" style="right:auto; left:24px; bottom:76px;" title="Export your Seen/Watchlist/Notify/Ignored data as JSON">💾 EXPORT</button>
+<button class="back-to-top" id="backToTop" title="Scroll to top">↑ TOP</button>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" id="drawerClose">×</button>
+  <h2>Your lists</h2>
+  <div class="sub">stored locally in this browser only</div>
+  <div class="drawer-tabs">
+    <button class="drawer-tab active" data-status="seen">Seen (<span id="countSeen">0</span>)</button>
+    <button class="drawer-tab" data-status="watchlist">Watchlist (<span id="countWatchlist">0</span>)</button>
+    <button class="drawer-tab" data-status="notify">Notify (<span id="countNotify">0</span>)</button>
+    <button class="drawer-tab" data-status="ignore">Ignored (<span id="countIgnore">0</span>)</button>
+  </div>
+  <div class="drawer-actions">
+    <button id="exportBtn">Export JSON</button>
+    <label for="importFile">Import JSON<input type="file" id="importFile" accept=".json"></label>
+  </div>
+  <div class="notify-controls" id="watchlistControls" style="display:none;">
+    <button id="scanWatchlistBtn">Scan watchlist for unreleased titles</button>
+    <div class="notify-sub" id="scanStatusLabel">Checks your entire watchlist against TMDb's live status — can take a few minutes for large lists.</div>
+  </div>
+  <div class="notify-controls" id="notifyControls" style="display:none;">
+    <button id="checkNowBtn">Check availability now</button>
+    <button id="enableNotifBtn">Enable browser alerts</button>
+    <div class="notify-sub" id="lastCheckLabel"></div>
+  </div>
+  <div id="watchedList"></div>
+</div>
+
+<script>
+const API_BASE = 'https://api.themoviedb.org/3';
+const IMG_BASE = 'https://image.tmdb.org/t/p/w342';
+const KEY_STORAGE = 'unseen_tmdb_key';
+
+// Storage lives in IndexedDB now, not localStorage. localStorage is capped
+// at a fixed ~5-10MB per site in every major browser, with no user-facing
+// way to raise it — that's a hard spec limit, not tied to actual free disk
+// space. IndexedDB has no such fixed ceiling; its quota scales with
+// available disk space (often hundreds of MB to GB), which is what a
+// tagged library in the tens of thousands of titles actually needs.
+// IndexedDB is also a genuine key-value store, so each tag is its own
+// independent record — no more manual "sharding" trick to avoid
+// re-serializing the whole dataset on every click; that problem doesn't
+// exist here in the first place.
+const DB_NAME = 'UnseenDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'tags';
+let dbInstancePromise = null;
+function openDB(){
+  if(dbInstancePromise) return dbInstancePromise;
+  dbInstancePromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if(!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return dbInstancePromise;
+}
+
+async function loadAllTagsFromDB(){
+  try{
+    const db = await openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const result = {};
+      const req = store.openCursor();
+      req.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if(cursor){ result[cursor.key] = cursor.value; cursor.continue(); }
+        else resolve(Object.keys(result).length ? result : null);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }catch(e){
+    console.error('Failed to load from IndexedDB', e);
+    return null;
+  }
+}
+
+// Writes only the specific keys that changed. Deleted keys (removed from
+// the in-memory tags object) are deleted from the store, not left stale.
+async function saveKeysToDB(keys){
+  try{
+    const db = await openDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      keys.forEach(k => { if(k in tags) store.put(tags[k], k); else store.delete(k); });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }catch(e){
+    console.error('Failed to save to IndexedDB', e);
+    showStorageErrorBanner(e);
+  }
+}
+
+async function saveAllKeysToDB(){
+  await saveKeysToDB(Object.keys(tags));
+}
+
+async function showStorageErrorBanner(e){
+  const banner = document.getElementById('storageErrorBanner');
+  if(!banner) return;
+  let usageNote = '';
+  try{
+    if(navigator.storage && navigator.storage.estimate){
+      const { usage, quota } = await navigator.storage.estimate();
+      usageNote = ` (roughly ${(usage/1024/1024).toFixed(1)}MB used of an estimated ${(quota/1024/1024).toFixed(0)}MB available)`;
+    }
+  }catch(err){ /* the estimate is a bonus, not essential */ }
+  banner.innerHTML = `
+    <span>⚠️ A save just failed — your last change may not have been saved: ${escapeHtml(e && e.message || String(e))}${usageNote}.</span>
+    <button id="dismissStorageError" title="Dismiss">×</button>
+  `;
+  banner.style.display = 'flex';
+  document.getElementById('dismissStorageError').addEventListener('click', () => {
+    banner.style.display = 'none';
+  });
+}
+
+// One-time migration from the old localStorage-based formats (sharded v3,
+// single-blob v2, or original v1) into IndexedDB, then frees that
+// localStorage space entirely. Only runs if IndexedDB is genuinely empty —
+// once migrated, this never touches localStorage again.
+async function migrateFromLocalStorageIfNeeded(){
+  const OLD_NUM_SHARDS = 16;
+  const oldShardKey = (i) => `unseen_tags_v3_shard_${i}`;
+  let migrated = {};
+  let anyFound = false;
+  for(let i = 0; i < OLD_NUM_SHARDS; i++){
+    const raw = localStorage.getItem(oldShardKey(i));
+    if(raw){
+      anyFound = true;
+      try{ Object.assign(migrated, JSON.parse(raw)); }catch(e){ /* skip a corrupt shard */ }
+    }
+  }
+  if(!anyFound){
+    const blob = JSON.parse(localStorage.getItem('unseen_tags_v2') || 'null');
+    if(blob){
+      anyFound = true;
+      for(const key in blob){
+        if(/^\d+$/.test(key)) migrated[`movie-${key}`] = { ...blob[key], id: Number(key), mediaType: 'movie' };
+        else migrated[key] = blob[key];
+      }
+    } else {
+      const old = JSON.parse(localStorage.getItem('unseen_watched_v1') || '{}');
+      for(const id in old){
+        anyFound = true;
+        migrated[`movie-${id}`] = { id: Number(id), mediaType: 'movie', title: old[id].title, year: old[id].year, status: 'seen' };
+      }
+    }
+  }
+  if(anyFound && Object.keys(migrated).length){
+    tags = { ...migrated, ...tags }; // preserve anything tagged in the brief window before this completed
+    await saveAllKeysToDB();
+    for(let i = 0; i < OLD_NUM_SHARDS; i++){ try{ localStorage.removeItem(oldShardKey(i)); }catch(e){} }
+    try{ localStorage.removeItem('unseen_tags_v2'); }catch(e){}
+    try{ localStorage.removeItem('unseen_watched_v1'); }catch(e){}
+  }
+}
+
+// One-time cleanup: trim already-stored Seen/Ignored entries down to just
+// the fields they actually use (they only ever render as plain text/basic
+// cards, never posters/ratings). Only does real work — and a save — the
+// first time; already-trimmed entries have nothing left to strip.
+function trimLightweightEntries(){
+  const keysToTrim = [];
+  for(const key in tags){
+    const entry = tags[key];
+    if((entry.status === 'seen' || entry.status === 'ignore') &&
+       (entry.poster_path !== undefined || entry.vote_average !== undefined ||
+        entry.vote_count !== undefined || entry.runtime !== undefined || entry.original_language !== undefined)){
+      tags[key] = { id: entry.id, mediaType: entry.mediaType, title: entry.title, year: entry.year, status: entry.status };
+      keysToTrim.push(key);
+    }
+  }
+  if(keysToTrim.length) saveKeysToDB(keysToTrim);
+}
+
+// tags: { [`${mediaType}-${tmdbId}`]: { id, mediaType, title, year, status: 'seen'|'watchlist'|'ignore'|'notify' }, possibly with poster_path/vote_average/vote_count/runtime/original_language/genre_ids for watchlist/notify }
+// Starts empty and is populated asynchronously below — IndexedDB reads
+// can't happen synchronously at script load the way localStorage could.
+let tags = {};
+
+async function initTags(){
+  const loaded = await loadAllTagsFromDB();
+  if(loaded){
+    tags = { ...loaded, ...tags }; // preserve anything tagged in the brief window before this resolved
+  } else {
+    await migrateFromLocalStorageIfNeeded();
+  }
+  trimLightweightEntries();
+  // Refresh whatever's already on screen now that real data has arrived
+  renderDrawer();
+  if(mode === 'watchlist') renderWatchlist();
+}
+initTags();
+
+function keyFor(item){
+  return `${item.mediaType || 'movie'}-${item.id}`;
+}
+
+let mode = 'trending';
+let contentType = 'movie';
+let nextPage = 1;
+let totalPages = 1;
+let renderedIds = new Set();
+let loadedMovies = [];
+let genreCache = { movie: [], tv: [] };
+let isLoading = false;
+let stopRequested = false;
+let activeDrawerTab = 'seen';
+let listCategory = 'watchlist';
+const LIST_PAGE_SIZE = 200;
+let listVisibleCount = LIST_PAGE_SIZE;
+let drawerPageSize = 200;
+let drawerVisibleCount = drawerPageSize;
+let lastFetchParams = null;
+
+const apiKeyInput = document.getElementById('apiKey');
+const grid = document.getElementById('grid');
+const statusLine = document.getElementById('statusLine');
+const loadMoreBtn = document.getElementById('loadMore');
+const stopBtn = document.getElementById('stopBtn');
+const genreSelect = document.getElementById('genreSelect');
+const genreSelect2 = document.getElementById('genreSelect2');
+const languageSelect = document.getElementById('languageSelect');
+const searchRow = document.getElementById('searchRow');
+const searchInput = document.getElementById('searchInput');
+const minRatingInput = document.getElementById('minRating');
+const minVotesInput = document.getElementById('minVotes');
+const sortOrderSelect = document.getElementById('sortOrder');
+const maxRatingInput = document.getElementById('maxRating');
+const maxVotesInput = document.getElementById('maxVotes');
+const yearMinInput = document.getElementById('yearMin');
+const yearMaxInput = document.getElementById('yearMax');
+
+// Empty/invalid box = no limit on that side (null), never 0.
+function numOrNull(el, parser){
+  const v = parser(el.value);
+  return isNaN(v) ? null : v;
+}
+function ratingRange(){ return { min: numOrNull(minRatingInput, parseFloat), max: numOrNull(maxRatingInput, parseFloat) }; }
+function votesRange(){ return { min: numOrNull(minVotesInput, v => parseInt(v, 10)), max: numOrNull(maxVotesInput, v => parseInt(v, 10)) }; }
+function yearRange(){ return { min: numOrNull(yearMinInput, v => parseInt(v, 10)), max: numOrNull(yearMaxInput, v => parseInt(v, 10)) }; }
+function inRange(v, r){ return (r.min === null || v >= r.min) && (r.max === null || v <= r.max); }
+const goBtn = document.getElementById('goBtn');
+
+apiKeyInput.value = localStorage.getItem(KEY_STORAGE) || '';
+apiKeyInput.addEventListener('change', () => {
+  localStorage.setItem(KEY_STORAGE, apiKeyInput.value.trim());
+  prefetchGenreCaches();
+});
+
+// Both movie and TV genre lists are needed up front — Lists mixes both
+// types with no toggle to switch between them, and the genre badge on a
+// card needs whichever type that specific card actually is. Only fires
+// once a key is present; tmdbFetch would otherwise stomp the status line
+// with "paste your API key" before the user has done anything.
+function prefetchGenreCaches(){
+  if(!apiKeyInput.value.trim()) return;
+  ensureGenreCache('movie');
+  ensureGenreCache('tv');
+}
+prefetchGenreCaches();
+
+// Snapshot of everything that actually requires a fresh TMDb fetch to change.
+// Sort order is deliberately excluded — sorting is handled client-side and
+// never needs a re-fetch, so Go shouldn't wipe the loaded list for it.
+function currentFetchParams(){
+  return JSON.stringify({
+    mode,
+    contentType,
+    q: searchInput.value.trim(),
+    genre: genreSelect.value,
+    genre2: genreSelect2.value,
+    lang: languageSelect.value,
+    minRating: minRatingInput.value,
+    maxRating: maxRatingInput.value,
+    minVotes: minVotesInput.value,
+    maxVotes: maxVotesInput.value,
+    yearMin: yearMinInput.value,
+    yearMax: yearMaxInput.value,
+    showUnreleasedBrowse: document.getElementById('browseShowUnreleased').checked,
+    showShortsBrowse: document.getElementById('browseShowShorts').checked,
+    showRegularBrowse: document.getElementById('browseShowRegular').checked
+  });
+}
+
+goBtn.addEventListener('click', () => {
+  if(loadedMovies.length > 0 && lastFetchParams === currentFetchParams()){
+    // Nothing that requires new data has changed — just re-apply current sort.
+    reRenderLoaded();
+  } else {
+    resetAndFetch();
+  }
+});
+
+function copyTitleToClipboard(title, year, btn){
+  const text = year && year !== '—' ? `${title} ${year}` : title;
+  navigator.clipboard.writeText(text).then(() => {
+    if(!btn) return;
+    const original = btn.textContent;
+    btn.textContent = 'COPIED';
+    setTimeout(() => { btn.textContent = original; }, 1200);
+  }).catch(() => {
+    alert('Could not copy to clipboard. Your browser may be blocking clipboard access on this page.');
+  });
+}
+
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    languageSelect.style.display = 'inline-block';
+    searchRow.style.display = mode === 'search' ? 'flex' : 'none';
+    goBtn.style.display = mode === 'watchlist' ? 'none' : 'inline-block';
+    document.getElementById('watchlistTypeFilter').style.display = mode === 'watchlist' ? 'flex' : 'none';
+    document.getElementById('listCategoryRow').style.display = mode === 'watchlist' ? 'flex' : 'none';
+    document.getElementById('listSearchRow').style.display = mode === 'watchlist' ? 'flex' : 'none';
+    document.getElementById('azIndex').style.display = mode === 'watchlist' ? 'flex' : 'none';
+    if(mode !== 'watchlist') document.getElementById('listShowMoreBtn').style.display = 'none';
+    document.getElementById('browseTypeFilter').style.display = mode === 'watchlist' ? 'none' : 'flex';
+    document.getElementById('skipAllBtn').style.display = mode === 'discover' ? 'inline-block' : 'none';
+    document.querySelector('.type-toggle').style.display = mode === 'watchlist' ? 'none' : 'flex';
+    resetAndFetch();
+  });
+
+});
+
+document.querySelectorAll('.type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    contentType = btn.dataset.type;
+    searchInput.placeholder = contentType === 'tv' ? 'Search TV show titles...' : 'Search movie titles...';
+    resetAndFetch();
+  });
+});
+
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') resetAndFetch(); });
+
+document.querySelectorAll('.list-cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.list-cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    listCategory = btn.dataset.cat;
+    const hasFullData = listCategory === 'watchlist' || listCategory === 'notify';
+    document.getElementById('watchlistTypeFilter').style.display = hasFullData ? 'flex' : 'none';
+    if(mode === 'watchlist') renderWatchlist();
+  });
+});
+document.getElementById('listSearchInput').addEventListener('input', () => {
+  if(mode === 'watchlist') renderWatchlist();
+});
+document.getElementById('listSearchExclude').addEventListener('change', () => {
+  if(mode === 'watchlist') renderWatchlist();
+});
+document.getElementById('listShowMoreBtn').addEventListener('click', () => {
+  listVisibleCount += LIST_PAGE_SIZE;
+  renderWatchlist(true);
+});
+
+minRatingInput.addEventListener('change', resetAndFetch);
+minVotesInput.addEventListener('change', resetAndFetch);
+maxRatingInput.addEventListener('change', resetAndFetch);
+maxVotesInput.addEventListener('change', resetAndFetch);
+languageSelect.addEventListener('change', resetAndFetch);
+genreSelect.addEventListener('change', resetAndFetch);
+genreSelect2.addEventListener('change', resetAndFetch);
+document.getElementById('browseShowUnreleased').addEventListener('change', resetAndFetch);
+document.getElementById('browseShowShorts').addEventListener('change', resetAndFetch);
+document.getElementById('browseShowRegular').addEventListener('change', resetAndFetch);
+function sortableTitle(title){
+  return (title || '').replace(/^the\s+/i, '');
+}
+
+function compareMovies(a, b, sortKey){
+  switch(sortKey){
+    case 'votes': return (b.vote_count || 0) - (a.vote_count || 0);
+    case 'rating': return (b.vote_average || 0) - (a.vote_average || 0);
+    case 'date': return (b.release_date || '').localeCompare(a.release_date || '');
+    case 'alpha': return sortableTitle(a.title).localeCompare(sortableTitle(b.title));
+    default: return 0;
+  }
+}
+
+function sortLabel(sortKey){
+  return {
+    votes: 'by votes',
+    rating: 'by rating',
+    date: 'by release date',
+    alpha: 'alphabetically'
+  }[sortKey] || 'to original order';
+}
+
+function skipAllDisplayed(){
+  const items = [...loadedMovies]; // snapshot — loadedMovies gets cleared in bulk below
+  if(items.length === 0){
+    alert('Nothing currently displayed to skip.');
+    return;
+  }
+  const confirmed = confirm(`This will mark all ${items.length} title${items.length===1?'':'s'} currently displayed as SKIP (not interested). This can't be undone in bulk — you'd have to remove them individually from the Ignored list afterward. Continue?`);
+  if(!confirmed) return;
+
+  items.forEach(m => tagMovie(m, 'ignore', { silent: true }));
+  loadedMovies = [];
+  saveTags(); // one save + one drawer render for the whole batch, not per item
+
+  grid.innerHTML = '<div class="empty-state">All displayed titles skipped. Click Show more or Go to load fresh results.</div>';
+  clearSelection();
+  statusLine.textContent = `Skipped ${items.length} title${items.length===1?'':'s'}.`;
+}
+
+document.getElementById('skipAllBtn').addEventListener('click', skipAllDisplayed);
+
+function applyCurrentSort(){
+  if(mode === 'watchlist'){
+    renderWatchlist();
+  } else if(loadedMovies.length > 0){
+    reRenderLoaded();
+  }
+}
+
+sortOrderSelect.addEventListener('change', applyCurrentSort);
+document.getElementById('resortBtn').addEventListener('click', applyCurrentSort);
+
+function reRenderLoaded(){
+  loadedMovies = loadedMovies.filter(item => !tags[keyFor(item)]);
+  const list = [...loadedMovies];
+  if(sortOrderSelect.value){
+    list.sort((a,b) => compareMovies(a, b, sortOrderSelect.value));
+  }
+  grid.innerHTML = '';
+  clearSelection();
+  renderCards(list);
+  statusLine.textContent = `${list.length} titles loaded, re-sorted ${sortLabel(sortOrderSelect.value)}.`;
+}
+yearMinInput.addEventListener('change', resetAndFetch);
+yearMaxInput.addEventListener('change', resetAndFetch);
+
+let fetchGeneration = 0;
+
+function resetAndFetch(){
+  fetchGeneration++;
+  // abandon queued lookups for cards about to be wiped
+  detailFetchQueue.length = 0;
+  resetCheckProgress();
+  const myGeneration = fetchGeneration;
+  nextPage = 1;
+  totalPages = 1;
+  autoPartitionWindowEnd = null;
+  renderedIds = new Set();
+  loadedMovies = [];
+  grid.innerHTML = '';
+  clearSelection();
+  loadMoreBtn.style.display = 'none';
+  lastFetchParams = currentFetchParams();
+  if(mode === 'watchlist'){
+    renderWatchlist();
+  } else {
+    loadMore(myGeneration);
+  }
+}
+
+// Self-heals stale watchlist entries. A title's data (poster, runtime) is
+// snapshotted at the moment you tag it — for very new titles TMDb sometimes
+// hasn't uploaded a poster or finalized runtime yet at that exact moment,
+// and items tagged before the SHORT/SERIES badges existed simply never had
+// runtime captured at all. Rather than staying permanently blank, re-check
+// TMDb for any entry missing either field and patch it in — to both the
+// visible card and the cached tag, so it's fixed for good.
+async function refreshMissingWatchlistData(items){
+  const key = apiKeyInput.value.trim();
+  if(!key) return;
+  const missing = items.filter(item =>
+    !item.poster_path || (item.mediaType !== 'tv' && typeof item.runtime !== 'number') ||
+    item.original_language === undefined || (item.mediaType === 'tv' && !Array.isArray(item.genre_ids))
+  );
+  for(const item of missing){
+    const mediaType = item.mediaType || 'movie';
+    const detail = await tmdbFetch(`/${mediaType}/${item.id}`);
+    if(!detail) continue;
+
+    const tagKey = `${mediaType}-${item.id}`;
+    const patch = {};
+    if(detail.poster_path) patch.poster_path = detail.poster_path;
+    if(mediaType !== 'tv' && typeof detail.runtime === 'number') patch.runtime = detail.runtime;
+    if(detail.original_language !== undefined) patch.original_language = detail.original_language;
+    if(mediaType === 'tv' && Array.isArray(detail.genres)) patch.genre_ids = detail.genres.map(g => g.id);
+    if(tags[tagKey] && Object.keys(patch).length){ tags[tagKey] = { ...tags[tagKey], ...patch }; dirtyKeys.add(tagKey); }
+
+    const cardEl = grid.querySelector(`.card[data-id="${item.id}"][data-media-type="${mediaType}"]`);
+    if(patch.genre_ids && patch.genre_ids.includes(REALITY_TV_GENRE_ID)){
+      cardEl?.remove(); // an older watchlist entry that predates this exclusion — silently drop it now that we know
+      continue;
+    }
+    if(cardEl){
+      if(detail.poster_path){
+        const posterWrap = cardEl.querySelector('.poster-wrap');
+        const noPosterEl = posterWrap?.querySelector('.no-poster');
+        if(noPosterEl){
+          const img = document.createElement('img');
+          img.src = `${IMG_BASE}${detail.poster_path}`;
+          img.alt = item.title;
+          img.loading = 'lazy';
+          noPosterEl.replaceWith(img);
+        }
+      }
+      if(mediaType !== 'tv' && isShortRuntime(detail.runtime)){
+        cardEl.classList.add('short-title');
+        const posterWrap = cardEl.querySelector('.poster-wrap');
+        if(posterWrap && !posterWrap.querySelector('.type-badge')){
+          const badge = document.createElement('div');
+          badge.className = 'type-badge short-badge';
+          badge.textContent = 'SHORT';
+          posterWrap.appendChild(badge);
+        }
+      }
+    }
+  }
+  if(missing.some(item => tags[`${item.mediaType || 'movie'}-${item.id}`])){
+    saveTagsWithReconcile(); // merges with current storage instead of blindly overwriting it
+  }
+}
+
+function renderWatchlist(keepPagination){
+  if(!keepPagination) listVisibleCount = LIST_PAGE_SIZE;
+  grid.innerHTML = '';
+  clearSelection();
+  // Seen/Ignored entries deliberately never store poster/rating/runtime/
+  // language (see tagMovie) since the drawer only ever showed them as plain
+  // text — so those filters have nothing to work with here and are skipped
+  // for those two categories rather than silently hiding everything.
+  const hasFullData = listCategory === 'watchlist' || listCategory === 'notify';
+  const ratingR = ratingRange();
+  const votesR = votesRange();
+  const hasRatingFilter = hasFullData && (ratingR.min !== null || ratingR.max !== null);
+  const hasVotesFilter = hasFullData && (votesR.min !== null || votesR.max !== null);
+  const showMovies = document.getElementById('filterMovies').checked;
+  const showSeries = document.getElementById('filterSeries').checked;
+  const showShorts = document.getElementById('filterShorts').checked;
+  const showUnreleased = document.getElementById('filterUnreleased').checked;
+  const searchTerm = document.getElementById('listSearchInput').value.trim().toLowerCase();
+  const excludeMatches = document.getElementById('listSearchExclude').checked;
+
+  let items = Object.keys(tags)
+    .filter(key => tags[key].status === listCategory)
+    .map(key => ({
+      id: tags[key].id,
+      mediaType: tags[key].mediaType || 'movie',
+      title: tags[key].title,
+      poster_path: tags[key].poster_path || null,
+      vote_average: tags[key].vote_average,
+      vote_count: tags[key].vote_count,
+      runtime: tags[key].runtime,
+      original_language: tags[key].original_language,
+      genre_ids: tags[key].genre_ids,
+      release_date: tags[key].year ? `${tags[key].year}-01-01` : ''
+    }));
+
+  if(hasFullData) items = items.filter(m => !isRealityTv(m));
+
+  items = items.filter(m =>
+    (!hasRatingFilter || inRange(m.vote_average || 0, ratingR)) &&
+    (!hasVotesFilter || inRange(m.vote_count || 0, votesR)) &&
+    passesYearFilter(m.release_date) &&
+    (!hasFullData || (isAllowedLanguage(m) && matchesLanguageSelection(m)))
+  );
+
+  items = items.filter(m => showUnreleased || isReleased(m));
+
+  items = items.filter(m => matchesGenreSelection(m));
+
+  if(hasFullData){
+    items = items.filter(m => {
+      // Category defaults to "movie" until runtime is known to be short —
+      // matches "movies are the default" from the badge behavior itself.
+      const category = m.mediaType === 'tv' ? 'series' : (isShortRuntime(m.runtime) ? 'short' : 'movie');
+      if(category === 'series') return showSeries;
+      if(category === 'short') return showShorts;
+      return showMovies;
+    });
+  }
+
+  if(searchTerm){
+    items = items.filter(m => {
+      const matches = (m.title || '').toLowerCase().includes(searchTerm);
+      return excludeMatches ? !matches : matches;
+    });
+  }
+
+  items = items.sort((a,b) => sortOrderSelect.value
+    ? compareMovies(a, b, sortOrderSelect.value)
+    : sortableTitle(a.title).localeCompare(sortableTitle(b.title)));
+
+  const totalCount = Object.values(tags).filter(t => t.status === listCategory).length;
+  const categoryLabels = { watchlist: 'watchlist', seen: 'seen list', notify: 'notify list', ignore: 'ignored list' };
+
+  const visibleItems = items.slice(0, listVisibleCount);
+  const remaining = items.length - visibleItems.length;
+
+  buildAzIndex(visibleItems);
+
+  const listShowMoreBtn = document.getElementById('listShowMoreBtn');
+  if(visibleItems.length === 0){
+    grid.innerHTML = totalCount === 0
+      ? `<div class="empty-state">Nothing in your ${categoryLabels[listCategory]} yet.</div>`
+      : `<div class="empty-state">Nothing matches the current filters.</div>`;
+    statusLine.textContent = '';
+    listShowMoreBtn.style.display = 'none';
+  } else {
+    renderCards(visibleItems);
+    statusLine.textContent = remaining > 0
+      ? `${visibleItems.length} of ${items.length} title${items.length===1?'':'s'} in ${categoryLabels[listCategory]}.`
+      : `${items.length} title${items.length===1?'':'s'} in ${categoryLabels[listCategory]}.`;
+    if(hasFullData) refreshMissingWatchlistData(visibleItems);
+
+    if(remaining > 0){
+      listShowMoreBtn.textContent = `Show ${Math.min(remaining, LIST_PAGE_SIZE)} more (${remaining} left)`;
+      listShowMoreBtn.style.display = 'block';
+    } else {
+      listShowMoreBtn.style.display = 'none';
+    }
+  }
+}
+
+function buildAzIndex(items){
+  const azContainer = document.getElementById('azIndex');
+  if(!azContainer) return;
+  if(items.length < 10){ azContainer.innerHTML = ''; return; } // not worth an index for a short list
+  const lettersPresent = new Set();
+  items.forEach(m => {
+    const t = sortableTitle(m.title || '').trim();
+    const first = t.charAt(0).toUpperCase();
+    lettersPresent.add(/[A-Z]/.test(first) ? first : '#');
+  });
+  const allLetters = ['#', ...Array.from({length:26}, (_, i) => String.fromCharCode(65+i))];
+  azContainer.innerHTML = allLetters.map(l => {
+    const has = lettersPresent.has(l);
+    return `<button class="az-letter${has ? '' : ' az-empty'}" data-letter="${l}">${l}</button>`;
+  }).join('');
+  azContainer.querySelectorAll('.az-letter:not(.az-empty)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const letter = btn.dataset.letter;
+      const cards = [...grid.querySelectorAll('.card')];
+      const target = cards.find(c => {
+        const titleEl = c.querySelector('.card-title');
+        if(!titleEl) return false;
+        const t = sortableTitle(titleEl.textContent || '').trim();
+        const first = t.charAt(0).toUpperCase();
+        return letter === '#' ? !/[A-Z]/.test(first) : first === letter;
+      });
+      if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+async function tmdbFetch(path, params={}, retryCount=0){
+  const key = apiKeyInput.value.trim();
+  if(!key){
+    statusLine.textContent = 'Paste your TMDb API key above first.';
+    statusLine.style.color = 'var(--remove)';
+    return null;
+  }
+  const url = new URL(API_BASE + path);
+  url.searchParams.set('api_key', key);
+  for(const k in params) url.searchParams.set(k, params[k]);
+  const res = await fetch(url);
+  if(res.status === 429 && retryCount < 3){
+    // Rate limited — back off and retry instead of failing outright. Uses
+    // TMDb's own Retry-After header when present, otherwise a short
+    // exponential backoff (0.5s, 1s, 2s).
+    const retryAfter = parseFloat(res.headers && res.headers.get && res.headers.get('Retry-After')) || (0.5 * Math.pow(2, retryCount));
+    await new Promise(r => setTimeout(r, retryAfter * 1000));
+    return tmdbFetch(path, params, retryCount + 1);
+  }
+  if(!res.ok){
+    statusLine.textContent = res.status === 401 ? 'TMDb error 401. Check your API key.' : `TMDb error ${res.status}.`;
+    statusLine.style.color = 'var(--remove)';
+    return null;
+  }
+  statusLine.style.color = 'var(--text-faint)';
+  return res.json();
+}
+
+function passesYearFilter(releaseDate){
+  const r = yearRange();
+  if(r.min === null && r.max === null) return true;
+  const year = parseInt((releaseDate || '').slice(0,4), 10);
+  if(!year) return true; // don't hide titles with unknown release dates
+  return inRange(year, r);
+}
+
+const todayISO = new Date().toISOString().slice(0, 10);
+
+// Baked-in, always-on: exclude anything not yet released (planned, in
+// production, or dated in the future). Unlike passesYearFilter, a missing
+// date does NOT pass here — the point is confirming something is actually
+// out, not grouping by era, so "unknown" defaults to excluded.
+function isReleased(item){
+  if(!item.release_date) return false;
+  return item.release_date <= todayISO;
+}
+
+function isShortRuntime(runtime){
+  return typeof runtime === 'number' && runtime > 0 && runtime < 60;
+}
+
+// Three-way categorization for the browse-section Unreleased/Shorts/Regular
+// toggles. Runtime isn't available in browse results (only the individual
+// title page has it), so a movie with unknown runtime can't be definitively
+// placed into Short vs Regular yet — it's allowed through as long as EITHER
+// of those two toggles is on, and gets reclassified (possibly removed) once
+// the lazy per-card check resolves its real runtime.
+function passesBrowseTypeFilter(m){
+  const showUnreleased = document.getElementById('browseShowUnreleased').checked;
+  const showShorts = document.getElementById('browseShowShorts').checked;
+  const showRegular = document.getElementById('browseShowRegular').checked;
+  if(!isReleased(m)) return showUnreleased;
+  if(m.mediaType === 'tv') return showRegular; // TV has no "short" concept in this tool
+  if(typeof m.runtime === 'number') return isShortRuntime(m.runtime) ? showShorts : showRegular;
+  return showShorts || showRegular; // unknown yet — don't prematurely exclude either possibility
+}
+
+// Baked-in, always-on across every section: only these five languages are
+// eligible. Discover enforces this server-side via with_original_language
+// (efficient — TMDb never returns anything else). Trending and Search have
+// no server-side language filter at all, but original_language is already
+// present on every result they return, so filtering client-side there costs
+// nothing extra. A missing value (only possible for not-yet-self-healed
+// older Watchlist entries) passes rather than being hidden prematurely.
+const ALLOWED_LANGUAGES = ['en', 'ja', 'ko', 'cs', 'sk'];
+// Baked-in, silent, always-on: TMDb's TV genre ID for Reality is 10764.
+// Discover excludes it server-side (efficient — TMDb never returns it).
+// Trending/Search have no server-side genre exclusion, but genre_ids is
+// already included on every TV result they return, so this costs nothing
+// extra there either.
+const REALITY_TV_GENRE_ID = 10764;
+function isRealityTv(item){
+  return item.mediaType === 'tv' && Array.isArray(item.genre_ids) && item.genre_ids.includes(REALITY_TV_GENRE_ID);
+}
+
+function isAllowedLanguage(item){
+  return !item.original_language || ALLOWED_LANGUAGES.includes(item.original_language);
+}
+
+// User-controlled narrowing on top of the baked-in eligibility list. When
+// "All eligible languages" is selected, this is a no-op (same 5 languages
+// already covered by isAllowedLanguage). Discover enforces the specific
+// pick server-side too, but this client-side check makes the selector work
+// identically in Trending, Search, and Watchlist as well, which have no
+// server-side language param to use — original_language is already present
+// on every result those return, so this costs nothing extra.
+function matchesLanguageSelection(item){
+  const selected = languageSelect.value;
+  if(!selected || selected === 'en|ja|ko|cs|sk') return true;
+  return !item.original_language || item.original_language === selected;
+}
+
+// Movies and TV have genuinely different genre taxonomies (movies split
+// Action/Adventure, TV combines them as "Action & Adventure"; TV also has
+// genres with no movie equivalent like Soap/Talk, and vice versa). The genre
+// picker is shared across every section now (Trending/Discover/Search/Lists
+// can all mix or switch between movie and TV), so rather than showing one
+// type's raw IDs and silently breaking whenever the other type is in view,
+// it's built from a combined-by-name list: each entry remembers whichever
+// numeric id(s) that name maps to per type, and filtering always looks up
+// the id that matches the ITEM's own mediaType, not whichever type happens
+// to be toggled at the moment.
+let combinedGenreList = []; // [{name, movieId?, tvId?}, ...]
+
+function ensureGenreCache(type){
+  if(genreCache[type].length) return Promise.resolve(genreCache[type]);
+  return tmdbFetch(`/genre/${type}/list`).then(data => {
+    if(data && Array.isArray(data.genres)) genreCache[type] = data.genres;
+    rebuildCombinedGenreList();
+    return genreCache[type];
+  });
+}
+
+// Kept for the Discover fetch path, which still needs "has this type's
+// genre list arrived yet" resolved before building with_genres.
+async function loadGenres(){
+  await ensureGenreCache(contentType);
+}
+
+function rebuildCombinedGenreList(){
+  const map = new Map();
+  (genreCache.movie || []).forEach(g => {
+    const entry = map.get(g.name) || { name: g.name };
+    entry.movieId = g.id;
+    map.set(g.name, entry);
+  });
+  (genreCache.tv || []).forEach(g => {
+    const entry = map.get(g.name) || { name: g.name };
+    entry.tvId = g.id;
+    map.set(g.name, entry);
+  });
+  combinedGenreList = [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+  populateGenreSelects(combinedGenreList);
+  backfillGenreBadges();
+}
+
+function populateGenreSelects(list){
+  // Preserve whatever was already picked across a repopulation (this can
+  // fire twice — once when movie genres arrive, once when TV genres do).
+  const prev1 = genreSelect.value;
+  const prev2 = genreSelect2.value;
+  genreSelect.innerHTML = '<option value="">Any genre</option>' +
+    list.map(g => `<option value="${escapeHtml(g.name)}">${escapeHtml(g.name)}</option>`).join('');
+  genreSelect2.innerHTML = '<option value="">+ second genre</option>' +
+    list.map(g => `<option value="${escapeHtml(g.name)}">${escapeHtml(g.name)}</option>`).join('');
+  if(prev1) genreSelect.value = prev1;
+  if(prev2) genreSelect2.value = prev2;
+}
+
+// First-listed genre for a card badge — purely cosmetic, so it uses
+// whichever genre cache is already loaded rather than blocking on network.
+function firstGenreName(item){
+  const type = item.mediaType === 'tv' ? 'tv' : 'movie';
+  const list = genreCache[type];
+  if(!Array.isArray(item.genre_ids) || !item.genre_ids.length || !list || !list.length) return null;
+  const match = list.find(g => g.id === item.genre_ids[0]);
+  return match ? match.name : null;
+}
+
+// Cards can render before both genre caches have arrived (badge fetch is
+// fire-and-forget so it never blocks the first paint). Once a cache lands,
+// fill in any badge left blank the first time around.
+function backfillGenreBadges(){
+  grid.querySelectorAll('.card').forEach(card => {
+    const el = card.querySelector('.genre-badge');
+    if(!el || el.textContent) return;
+    let ids = [];
+    try { ids = JSON.parse(card.dataset.genreIds || '[]'); } catch(e) {}
+    if(!ids.length) return;
+    const list = genreCache[card.dataset.mediaType === 'tv' ? 'tv' : 'movie'];
+    if(!list || !list.length) return;
+    const match = list.find(g => g.id === ids[0]);
+    if(match) el.textContent = match.name;
+  });
+}
+
+// User-picked genre narrowing, shared by Trending/Search/Lists (Discover
+// applies its picks server-side via with_genres already). AND logic across
+// both dropdowns, matching Discover's comma-AND semantics. A genre name
+// with no id for this item's own mediaType (e.g. a TV-only genre while
+// looking at a movie) can never match that item, so it's correctly
+// excluded rather than silently ignored. Missing genre_ids (not yet
+// self-healed older Watchlist/Notify entries) passes through rather than
+// being hidden.
+function matchesGenreSelection(item){
+  const selectedNames = [genreSelect.value, genreSelect2.value].filter(Boolean);
+  if(!selectedNames.length) return true;
+  if(!Array.isArray(item.genre_ids)) return true;
+  const isTv = item.mediaType === 'tv';
+  return selectedNames.every(name => {
+    const entry = combinedGenreList.find(g => g.name === name);
+    const id = entry ? (isTv ? entry.tvId : entry.movieId) : undefined;
+    return id !== undefined && item.genre_ids.includes(id);
+  });
+}
+
+// TMDb caps every query at page 500 (~10,000 results), but that ceiling is
+// PER EXACT QUERY, not global. "Movies from 2019" and "movies from 2018"
+// are different queries, each with its own fresh 10,000-result allowance.
+// So Discover splits into single-year windows and shifts to the next one
+// whenever the current year's ceiling is hit, letting a deep scan push
+// arbitrarily far into TMDb's catalog instead of stopping at ~10k total —
+// and single-year granularity means even an unusually prolific year is
+// very unlikely to itself exceed 10k results, unlike a wider multi-year
+// window would. Only applies to Discover — Trending/Search have no
+// server-side year filter to partition by at all.
+const AUTO_PARTITION_WINDOW_SIZE = 1;
+const AUTO_PARTITION_FLOOR_YEAR = 1900;
+let autoPartitionWindowEnd = null; // upper bound (year) of the current window; null = not started this session
+
+function currentPartitionBounds(){
+  const currentYear = new Date().getFullYear();
+  const yr = yearRange();
+
+  const ceilingYear = yr.max !== null ? Math.min(yr.max, currentYear) : currentYear;
+  const floorYear = Math.max(AUTO_PARTITION_FLOOR_YEAR, yr.min !== null ? yr.min : AUTO_PARTITION_FLOOR_YEAR);
+
+  if(autoPartitionWindowEnd === null) autoPartitionWindowEnd = ceilingYear;
+  const windowEnd = Math.min(autoPartitionWindowEnd, ceilingYear);
+  const windowStart = Math.max(floorYear, windowEnd - AUTO_PARTITION_WINDOW_SIZE + 1);
+  return { windowStart, windowEnd, floorYear, exhausted: windowEnd < floorYear };
+}
+
+function shiftToNextPartitionWindow(){
+  const { windowStart } = currentPartitionBounds();
+  autoPartitionWindowEnd = windowStart - 1;
+}
+
+async function fetchPage(page){
+  if(mode === 'trending'){
+    return tmdbFetch(`/trending/${contentType}/week`, { page });
+  } else if(mode === 'search'){
+    const q = searchInput.value.trim();
+    if(!q) return null;
+    return tmdbFetch(`/search/${contentType}`, { query: q, page });
+  } else {
+    await loadGenres();
+    const selectedGenreNames = [genreSelect.value, genreSelect2.value].filter(Boolean);
+    const isTv = contentType === 'tv';
+    // A selected name with no id for the CURRENT type (e.g. a TV-only genre
+    // while browsing movies) is dropped rather than sent as an invalid
+    // param — Discover just won't narrow by that one, matching how
+    // matchesGenreSelection treats it for Trending/Search (see there).
+    const genreIds = selectedGenreNames
+      .map(name => {
+        const entry = combinedGenreList.find(g => g.name === name);
+        return entry ? (isTv ? entry.tvId : entry.movieId) : undefined;
+      })
+      .filter(id => id !== undefined);
+    const uniqueGenreIds = [...new Set(genreIds)];
+    const params = {
+      page,
+      sort_by: 'popularity.desc',
+      with_genres: uniqueGenreIds.join(','), // comma = AND, so a second genre stacks onto the first
+      with_original_language: languageSelect.value
+    };
+    if(contentType === 'tv') params.without_genres = String(REALITY_TV_GENRE_ID);
+    const rr = ratingRange();
+    if(rr.min !== null && rr.min > 0) params['vote_average.gte'] = rr.min;
+    if(rr.max !== null) params['vote_average.lte'] = rr.max;
+    const vr = votesRange();
+    if(vr.min !== null && vr.min > 0) params['vote_count.gte'] = vr.min;
+    if(vr.max !== null) params['vote_count.lte'] = vr.max;
+    const { windowStart, windowEnd, exhausted } = currentPartitionBounds();
+    if(!exhausted){
+      const dateField = contentType === 'movie' ? 'primary_release_date' : 'first_air_date';
+      params[`${dateField}.gte`] = `${windowStart}-01-01`;
+      params[`${dateField}.lte`] = `${windowEnd}-12-31`;
+    }
+    return tmdbFetch(`/discover/${contentType}`, params);
+  }
+}
+
+// Keeps fetching consecutive TMDb pages (capped per click) until we have a
+// decent batch of genuinely new, untagged titles — TMDb pages overlap and
+// shrink as titles get filtered, so a single page fetch isn't reliable.
+async function loadMore(generation){
+  if(generation === undefined) generation = fetchGeneration; // e.g. Show More button, not a fresh reset
+  if(isLoading) return;
+  if(mode === 'search' && !searchInput.value.trim()){
+    statusLine.textContent = 'Type something to search for.';
+    return;
+  }
+  isLoading = true;
+  loadMoreBtn.disabled = true;
+  goBtn.disabled = true;
+  loadMoreBtn.style.display = 'none';
+  stopRequested = false;
+  stopBtn.disabled = false;
+  stopBtn.textContent = 'Stop';
+  stopBtn.style.display = 'block';
+
+  // Snapshot the type this whole batch belongs to — if the user flips the
+  // Movies/TV toggle mid-fetch, results already in flight must keep the
+  // type they were actually requested under, not whatever is selected by
+  // the time they land. Without this, an in-flight movie fetch resolving
+  // after a toggle to TV would get mislabeled as a TV result, and since
+  // movie/TV IDs collide (e.g. movie 272 = Batman Begins, tv 272 = a
+  // different show), that title would render under the wrong entry.
+  const myType = contentType;
+
+  const TARGET_NEW = Math.max(1, parseInt(document.getElementById('batchSize').value, 10) || 40);
+  let batch = [];
+  let totalHiddenThisRound = 0;
+  let pagesFetched = 0;
+  let stoppedByUser = false;
+
+  while(batch.length < TARGET_NEW){
+    if(generation !== fetchGeneration){ isLoading = false; stopBtn.style.display = 'none'; return; } // superseded — bail out silently
+    if(stopRequested){ stoppedByUser = true; break; }
+
+    if(nextPage > totalPages){
+      // This window's pages are exhausted (or it's not a windowed mode at
+      // all). For Discover, try shifting to the next unexplored year range
+      // before giving up — that's what actually gets around TMDb's 500-page
+      // ceiling, which applies per exact query rather than globally.
+      if(mode === 'discover' && !currentPartitionBounds().exhausted){
+        shiftToNextPartitionWindow();
+        nextPage = 1;
+        totalPages = 1;
+        if(currentPartitionBounds().exhausted) break; // that shift went past the historical floor — genuinely done
+      } else {
+        break;
+      }
+    }
+
+    const windowLabel = mode === 'discover' ? (() => { const b = currentPartitionBounds(); return b.windowStart === b.windowEnd ? ` [${b.windowEnd}]` : ` [${b.windowStart}-${b.windowEnd}]`; })() : '';
+    statusLine.textContent = `Loading page ${nextPage}${totalPages > 1 ? ` of ${totalPages}` : ''}${windowLabel} (found ${batch.length} of ${TARGET_NEW} so far)...`;
+    const data = await fetchPage(nextPage);
+    if(generation !== fetchGeneration){ isLoading = false; stopBtn.style.display = 'none'; return; } // check again — state may have changed during the await
+    if(stopRequested){ stoppedByUser = true; if(!data) break; } // stop was clicked while this page was in flight — finish processing it, then stop
+    pagesFetched++;
+    if(!data){
+      // This window's query was rejected (e.g., TMDb's page-500 ceiling) —
+      // try shifting to the next window rather than stopping outright.
+      if(mode === 'discover' && !currentPartitionBounds().exhausted){
+        shiftToNextPartitionWindow();
+        nextPage = 1;
+        totalPages = 1;
+        continue;
+      }
+      break;
+    }
+    totalPages = data.total_pages || 1;
+
+    data.results.forEach(r => {
+      r.title = r.title || r.name;
+      r.release_date = r.release_date || r.first_air_date;
+      r.mediaType = myType;
+    });
+
+    const ratingR = ratingRange();
+    const hasRatingFilter = ratingR.min !== null || ratingR.max !== null;
+    const votesR = votesRange();
+    const hasVotesFilter = votesR.min !== null || votesR.max !== null;
+    const fresh = data.results.filter(m =>
+      !tags[keyFor(m)] &&
+      !renderedIds.has(keyFor(m)) &&
+      (!hasRatingFilter || inRange(m.vote_average || 0, ratingR)) &&
+      (!hasVotesFilter || inRange(m.vote_count || 0, votesR)) &&
+      passesYearFilter(m.release_date) &&
+      isAllowedLanguage(m) &&
+      matchesLanguageSelection(m) &&
+      passesBrowseTypeFilter(m) &&
+      !isRealityTv(m) &&
+      (mode === 'discover' || matchesGenreSelection(m)) // Discover already filtered server-side
+    );
+    const hidden = data.results.length - fresh.length;
+    totalHiddenThisRound += hidden;
+
+    fresh.forEach(m => renderedIds.add(keyFor(m)));
+    batch.push(...fresh);
+
+    nextPage++;
+    if(stoppedByUser) break;
+  }
+
+  if(generation !== fetchGeneration){ isLoading = false; stopBtn.style.display = 'none'; return; }
+
+  stopBtn.style.display = 'none';
+
+  if(sortOrderSelect.value){
+    batch.sort((a,b) => compareMovies(a, b, sortOrderSelect.value));
+  }
+  loadedMovies.push(...batch);
+  renderCards(batch);
+  const newlyShown = batch.length;
+
+  isLoading = false;
+  loadMoreBtn.disabled = false;
+  goBtn.disabled = false;
+
+  if(stoppedByUser){
+    statusLine.textContent = `Stopped — ${newlyShown} new shown before stopping (${pagesFetched} page${pagesFetched===1?'':'s'} checked, ${totalHiddenThisRound} filtered out).`;
+  } else if(newlyShown === 0 && grid.children.length === 0){
+    if(mode === 'discover' && currentPartitionBounds().exhausted){
+      statusLine.textContent = `Reached ${AUTO_PARTITION_FLOOR_YEAR} — scanned every year window down to the historical floor for this exact filter combination and found nothing left to show.`;
+    } else {
+      statusLine.textContent = renderedIds.size === 0 && totalHiddenThisRound === 0
+        ? ''
+        : 'Nothing left to show here — everything on these pages is filtered out by your rating, votes, or year settings.';
+    }
+  } else {
+    statusLine.textContent = `${newlyShown} new shown this round (${pagesFetched} page${pagesFetched===1?'':'s'} checked, ${totalHiddenThisRound} filtered out).`;
+  }
+
+  const morePagesInWindow = nextPage <= totalPages;
+  const moreWindowsLeft = mode === 'discover' && !currentPartitionBounds().exhausted;
+  if(morePagesInWindow || moreWindowsLeft){
+    loadMoreBtn.style.display = 'block';
+  }
+}
+
+loadMoreBtn.addEventListener('click', async () => {
+  await loadMore();
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+});
+
+stopBtn.addEventListener('click', () => {
+  stopRequested = true;
+  stopBtn.disabled = true;
+  stopBtn.textContent = 'Stopping...';
+});
+
+// Caps how many lazy detail-fetches run at once. Without this, scrolling
+// through a large batch — especially one heavy in short films, where every
+// card needs its own runtime lookup — could fire dozens of requests
+// simultaneously, overwhelming the browser's connection pool or tripping
+// TMDb's rate limiting. Extra requests queue up and run as earlier ones
+// finish instead of all firing at once.
+const MAX_CONCURRENT_DETAIL_FETCHES = 4;
+
+// Progress of the runtime/release (Shorts / Unreleased) check, cumulative
+// since the last reset: how many cards queued, how many resolved, and how
+// many of those were then removed by the type toggles.
+const checkProgress = { total: 0, done: 0, removed: 0 };
+let checkGeneration = 0; // bumped on reset so lookups still in flight from a wiped batch don't pollute the new counts
+function updateCheckProgress(){
+  const box = document.getElementById('checkProgress');
+  if(checkProgress.total === 0){ box.style.display = 'none'; return; }
+  const finished = checkProgress.done >= checkProgress.total;
+  box.style.display = 'block';
+  box.classList.toggle('done', finished);
+  document.getElementById('checkProgressCount').textContent = `${checkProgress.done} / ${checkProgress.total}`;
+  document.getElementById('checkProgressFill').style.width = `${Math.round(checkProgress.done / checkProgress.total * 100)}%`;
+  document.getElementById('checkProgressSub').textContent =
+    (finished ? '✓ Done' : 'Checking…') + ` · ${checkProgress.removed} hidden by filters`;
+}
+function resetCheckProgress(){
+  checkGeneration++;
+  checkProgress.total = checkProgress.done = checkProgress.removed = 0;
+  updateCheckProgress();
+}
+
+// HUD hides itself when it has nothing to show, and can be collapsed.
+const hud = document.getElementById('hud');
+function refreshHudVisibility(){
+  const hasContent = !!statusLine.textContent ||
+    [loadMoreBtn, stopBtn, document.getElementById('listShowMoreBtn')].some(b => b.style.display && b.style.display !== 'none') ||
+    document.getElementById('checkProgress').style.display !== 'none';
+  hud.classList.toggle('empty', !hasContent);
+}
+new MutationObserver(refreshHudVisibility).observe(hud, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+document.getElementById('hudCollapse').addEventListener('click', () => {
+  const collapsed = hud.classList.toggle('collapsed');
+  document.getElementById('hudCollapse').textContent = collapsed ? '+' : '–';
+});
+let activeDetailFetches = 0;
+const detailFetchQueue = [];
+function enqueueDetailFetch(task){
+  detailFetchQueue.push(task);
+  processDetailFetchQueue();
+}
+function processDetailFetchQueue(){
+  while(activeDetailFetches < MAX_CONCURRENT_DETAIL_FETCHES && detailFetchQueue.length > 0){
+    const task = detailFetchQueue.shift();
+    activeDetailFetches++;
+    Promise.resolve(task()).finally(() => {
+      activeDetailFetches--;
+      processDetailFetchQueue();
+    });
+  }
+}
+
+const runtimeObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      runtimeObserver.unobserve(entry.target);
+      if(entry.target._fetchRuntime) enqueueDetailFetch(entry.target._fetchRuntime);
+    }
+  });
+}, { rootMargin: '300px' }); // start fetching a bit before a card actually enters the viewport
+
+// Multi-select for bulk actions (Skip Selected). Click toggles one card;
+// shift-click selects everything between the last-clicked card and this one
+// BY DISPLAY ORDER (grid.children), not visual row position — a fixed "skip
+// this row" button would break every time the grid reflows at a different
+// window width, since "a row" isn't a stable concept in a responsive grid.
+// Order-based ranges don't have that problem.
+let selectedKeys = new Set();
+let lastClickedKey = null;
+
+function handleCardSelectClick(card, m, event){
+  if(event.target.closest('.tag-row, .poster-wrap, .copy-link')) return; // don't hijack actual card actions
+  const key = keyFor(m);
+  const cardsInOrder = [...grid.querySelectorAll('.card')];
+
+  if(event.shiftKey && lastClickedKey !== null){
+    const lastIdx = cardsInOrder.findIndex(c => c.dataset.selKey === lastClickedKey);
+    const curIdx = cardsInOrder.findIndex(c => c === card);
+    if(lastIdx !== -1 && curIdx !== -1){
+      const [start, end] = lastIdx < curIdx ? [lastIdx, curIdx] : [curIdx, lastIdx];
+      for(let i = start; i <= end; i++){
+        const c = cardsInOrder[i];
+        selectedKeys.add(c.dataset.selKey);
+        c.classList.add('selected');
+      }
+    }
+  } else {
+    if(selectedKeys.has(key)){
+      selectedKeys.delete(key);
+      card.classList.remove('selected');
+    } else {
+      selectedKeys.add(key);
+      card.classList.add('selected');
+    }
+    lastClickedKey = key;
+  }
+  updateSelectionBar();
+}
+
+function updateSelectionBar(){
+  const bar = document.getElementById('selectionBar');
+  if(selectedKeys.size === 0){
+    bar.style.display = 'none';
+  } else {
+    bar.style.display = 'flex';
+    document.getElementById('selectionCount').textContent = `${selectedKeys.size} selected`;
+  }
+}
+
+function clearSelection(){
+  selectedKeys.clear();
+  lastClickedKey = null;
+  grid.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+  updateSelectionBar();
+}
+
+document.getElementById('clearSelectionBtn').addEventListener('click', clearSelection);
+document.getElementById('skipSelectedBtn').addEventListener('click', () => {
+  const keysToSkip = [...selectedKeys];
+  if(keysToSkip.length === 0) return;
+  const matched = loadedMovies.filter(item => keysToSkip.includes(keyFor(item)));
+  matched.forEach(m => tagMovie(m, 'ignore', { silent: true }));
+  loadedMovies = loadedMovies.filter(item => !keysToSkip.includes(keyFor(item)));
+  keysToSkip.forEach(key => {
+    grid.querySelector(`.card[data-sel-key="${key}"]`)?.remove();
+  });
+  saveTags(); // one save for the whole batch, not per item
+  const count = keysToSkip.length;
+  clearSelection();
+  statusLine.textContent = `Skipped ${count} selected title${count===1?'':'s'}.`;
+});
+
+function wireTagButtons(tagRowEl, card, m){
+  tagRowEl.querySelector('.seen')?.addEventListener('click', () => { tagMovie(m, 'seen'); card.remove(); if(mode==='watchlist' && grid.children.length===0) renderWatchlist(); });
+  tagRowEl.querySelector('.watchlist')?.addEventListener('click', () => { tagMovie(m, 'watchlist'); card.remove(); if(mode==='watchlist' && grid.children.length===0) renderWatchlist(); });
+  tagRowEl.querySelector('.notify')?.addEventListener('click', () => { tagMovie(m, 'notify'); card.remove(); if(mode==='watchlist' && grid.children.length===0) renderWatchlist(); });
+  tagRowEl.querySelector('.ignore')?.addEventListener('click', () => { tagMovie(m, 'ignore'); card.remove(); if(mode==='watchlist' && grid.children.length===0) renderWatchlist(); });
+}
+
+function renderCards(movies){
+  const eagerCards = [];
+  if(movies.length === 0 && grid.children.length === 0) return;
+  if(grid.querySelector('.empty-state')) grid.innerHTML = '';
+  movies.forEach(m => {
+    const year = (m.release_date || '').slice(0,4) || '—';
+    const released = isReleased(m);
+    const isTv = m.mediaType === 'tv';
+    const shortAlready = !isTv && isShortRuntime(m.runtime);
+    const card = document.createElement('div');
+    card.className = ['card', !released ? 'unreleased' : '', shortAlready ? 'short-title' : ''].filter(Boolean).join(' ');
+    card.dataset.id = m.id;
+    card.dataset.mediaType = m.mediaType || 'movie';
+    card.dataset.selKey = keyFor(m);
+    card.dataset.genreIds = JSON.stringify(Array.isArray(m.genre_ids) ? m.genre_ids : []);
+    card.addEventListener('click', (e) => handleCardSelectClick(card, m, e));
+    const tagRowHtml = released
+      ? `<button class="tag-btn seen" title="Mark seen">SEEN</button>
+         <button class="tag-btn watchlist" title="Add to watchlist">LATER</button>
+         <button class="tag-btn ignore" title="Not interested">SKIP</button>`
+      : `<button class="tag-btn notify" title="Notify me when this becomes available">NOTIFY</button>
+         <button class="tag-btn ignore" title="Not interested">SKIP</button>`;
+    let typeBadgeHtml = '';
+    if(isTv) typeBadgeHtml = '<div class="type-badge series-badge">SERIES</div>';
+    else if(shortAlready) typeBadgeHtml = '<div class="type-badge short-badge">SHORT</div>';
+    const genreName = firstGenreName(m);
+    card.innerHTML = `
+      <div class="poster-wrap">
+        ${m.poster_path ? `<img src="${IMG_BASE}${m.poster_path}" alt="${escapeHtml(m.title)}" loading="lazy">` : `<div class="no-poster">${escapeHtml(m.title)}</div>`}
+        ${!released ? '<div class="unreleased-badge">UNRELEASED</div>' : ''}
+        ${typeBadgeHtml}
+        <div class="genre-badge">${genreName ? escapeHtml(genreName) : ''}</div>
+      </div>
+      <div class="card-body">
+        <p class="card-title">${escapeHtml(m.title)}</p>
+        <div class="card-meta">
+          <span>${year}</span>
+          <span class="meta-rating">★ ${m.vote_average ? m.vote_average.toFixed(1) : '—'}</span>
+          <span class="meta-votes">${typeof m.vote_count === 'number' ? formatCompactNumber(m.vote_count) : '—'} votes</span>
+        </div>
+        <div class="card-actions">
+          <div class="tag-row">
+            ${tagRowHtml}
+          </div>
+          <button class="copy-link" title="Copy title and year to clipboard">COPY TITLE</button>
+        </div>
+      </div>
+    `;
+    wireTagButtons(card, card, m);
+    card.querySelector('.poster-wrap').addEventListener('click', () => {
+      window.open(`https://www.themoviedb.org/${m.mediaType === 'tv' ? 'tv' : 'movie'}/${m.id}`, '_blank', 'noopener');
+    });
+    card.querySelector('.copy-link').addEventListener('click', (e) => {
+      copyTitleToClipboard(m.title, year, e.target);
+    });
+    const posterImg = card.querySelector('.poster-wrap img');
+    if(posterImg){
+      // Some posters 404 at the w342 size specifically even though the
+      // original file exists on TMDb — likely a gap in their resized-image
+      // cache rather than a missing poster (confirmed: same titles fail
+      // every time, and the poster shows fine on TMDb's own page). So on
+      // failure, cascade through larger sizes instead of retrying the same
+      // one — 'original' should exist whenever the poster genuinely does.
+      const posterSizeFallbacks = ['w500', 'w780', 'original'];
+      let posterSizeIndex = 0;
+      const posterErrorHandler = () => {
+        console.error('Poster failed to load:', posterImg.src, '| poster_path from API:', m.poster_path, '| title:', m.title);
+        if(posterSizeIndex < posterSizeFallbacks.length){
+          posterImg.src = `https://image.tmdb.org/t/p/${posterSizeFallbacks[posterSizeIndex]}${m.poster_path}`;
+          posterSizeIndex++;
+        } else {
+          posterImg.removeEventListener('error', posterErrorHandler);
+          const fallback = document.createElement('div');
+          fallback.className = 'no-poster';
+          fallback.textContent = m.title;
+          posterImg.replaceWith(fallback);
+        }
+      };
+      posterImg.addEventListener('error', posterErrorHandler);
+    }
+    // Neither runtime (for the SHORT badge) nor a reliably accurate release
+    // status (for the UNRELEASED badge) are included in list responses
+    // (Trending/Discover/Search) — only the individual detail endpoint has
+    // them. A title with messy/incomplete metadata in the list response can
+    // get an incorrect UNRELEASED badge even though its actual detail page
+    // shows it's released. So both get resolved lazily via one shared
+    // detail fetch, and only for cards actually scrolled into view (same
+    // principle as the poster images' native lazy loading) — firing this
+    // for an entire batch immediately was the cause of real slowdowns.
+    const needsRuntimeCheck = !isTv && !shortAlready && typeof m.runtime !== 'number';
+    const needsReleaseCheck = !released;
+    // Seen/Ignored deliberately never store poster/rating/runtime data (see
+    // tagMovie) — that's what cut storage roughly in half at scale. So for
+    // just those two categories, fetch a poster lazily to display, but
+    // never persist it back to tags: re-fetched fresh each time the section
+    // is viewed rather than paying to cache it permanently.
+    const isLightweightListView = mode === 'watchlist' && (listCategory === 'seen' || listCategory === 'ignore');
+    const needsPosterOnly = isLightweightListView && !m.poster_path;
+    if(((needsRuntimeCheck || needsReleaseCheck) && mode !== 'watchlist') || needsPosterOnly){
+      const key = apiKeyInput.value.trim();
+      if(key){
+        card._fetchRuntime = () => {
+          return tmdbFetch(`/${isTv ? 'tv' : 'movie'}/${m.id}`).then(detail => {
+            if(!detail) return;
+
+            if(needsPosterOnly){
+              if(detail.poster_path && card.isConnected){
+                const posterWrap = card.querySelector('.poster-wrap');
+                const noPosterEl = posterWrap?.querySelector('.no-poster');
+                if(noPosterEl){
+                  const img = document.createElement('img');
+                  img.src = `${IMG_BASE}${detail.poster_path}`;
+                  img.alt = m.title;
+                  img.loading = 'lazy';
+                  noPosterEl.replaceWith(img);
+                }
+              }
+              return; // no persistence, no other checks for this lightweight path
+            }
+
+            const patch = {};
+
+            if(needsRuntimeCheck){
+              m.runtime = detail.runtime;
+              patch.runtime = detail.runtime;
+            }
+
+            let finalReleased = released;
+            if(needsReleaseCheck){
+              const freshDate = isTv ? detail.first_air_date : detail.release_date;
+              const availableStatuses = ['Returning Series', 'Ended', 'Canceled', 'Pilot'];
+              const nowReleased = detail.status
+                ? (isTv ? availableStatuses.includes(detail.status) : detail.status === 'Released')
+                : (!!freshDate && freshDate <= todayISO);
+              if(nowReleased){
+                finalReleased = true;
+                m.release_date = freshDate || m.release_date;
+                if(card.isConnected){
+                  card.classList.remove('unreleased');
+                  card.querySelector('.unreleased-badge')?.remove();
+                  const tagRowEl = card.querySelector('.tag-row');
+                  if(tagRowEl){
+                    tagRowEl.innerHTML = `
+                      <button class="tag-btn seen" title="Mark seen">SEEN</button>
+                      <button class="tag-btn watchlist" title="Add to watchlist">LATER</button>
+                      <button class="tag-btn ignore" title="Not interested">SKIP</button>
+                    `;
+                    wireTagButtons(tagRowEl, card, m);
+                  }
+                }
+              }
+            }
+
+            // Short/Regular only ever applies once a title is confirmed
+            // released — an unreleased movie frequently has no runtime data
+            // at all yet, and that must never get misread as "regular" and
+            // checked against the wrong toggle. Unreleased titles are
+            // governed purely by the Unreleased toggle, full stop.
+            if(!finalReleased){
+              if(!document.getElementById('browseShowUnreleased').checked && card.isConnected){
+                card.remove();
+                checkProgress.removed++;
+                loadedMovies = loadedMovies.filter(item => keyFor(item) !== keyFor(m));
+              }
+            } else if(card.isConnected){
+              let category;
+              if(isTv){
+                category = 'regular';
+              } else {
+                const rt = needsRuntimeCheck ? detail.runtime : m.runtime;
+                category = isShortRuntime(rt) ? 'short' : (typeof rt === 'number' ? 'regular' : null);
+              }
+              if(category){
+                const categoryToggleOn = category === 'short'
+                  ? document.getElementById('browseShowShorts').checked
+                  : document.getElementById('browseShowRegular').checked;
+                if(!categoryToggleOn){
+                  card.remove();
+                  checkProgress.removed++;
+                  loadedMovies = loadedMovies.filter(item => keyFor(item) !== keyFor(m));
+                } else if(category === 'short'){
+                  card.classList.add('short-title');
+                  const posterWrap = card.querySelector('.poster-wrap');
+                  if(posterWrap && !posterWrap.querySelector('.type-badge')){
+                    const badge = document.createElement('div');
+                    badge.className = 'type-badge short-badge';
+                    badge.textContent = 'SHORT';
+                    posterWrap.appendChild(badge);
+                  }
+                }
+              }
+            }
+
+            const tagKey = keyFor(m);
+            if(tags[tagKey] && Object.keys(patch).length){ tags[tagKey] = { ...tags[tagKey], ...patch }; dirtyKeys.add(tagKey); }
+          });
+        };
+        // Runtime/release checks run eagerly (bottom-up, see end of
+        // renderCards); only the lightweight poster-only path stays lazy.
+        if(needsPosterOnly) runtimeObserver.observe(card);
+        else eagerCards.push(card);
+      }
+    }
+    grid.appendChild(card);
+  });
+  // Resolve runtime/release status for the whole batch regardless of
+  // scroll position, starting from the LAST card and working upward, so
+  // removals happen below/above what you're looking at rather than
+  // shifting the cards at the top of the page under your cursor. Cards
+  // already gone (new search, tab switch) are skipped without a fetch.
+  checkProgress.total += eagerCards.length;
+  updateCheckProgress();
+  for(let i = eagerCards.length - 1; i >= 0; i--){
+    const c = eagerCards[i];
+    const gen = checkGeneration;
+    const task = () => {
+      const p = c.isConnected && c._fetchRuntime ? c._fetchRuntime() : null;
+      return Promise.resolve(p).finally(() => { if(gen === checkGeneration){ checkProgress.done++; updateCheckProgress(); } });
+    };
+    task._eager = true;
+    enqueueDetailFetch(task);
+  }
+  if(grid.children.length === 0){
+    grid.innerHTML = mode === 'watchlist'
+      ? '<div class="empty-state">Your watchlist is empty. Tag titles LATER from Trending, Discover, or Search.</div>'
+      : '<div class="empty-state">Nothing here yet. Try Go, or a different search.</div>';
+  }
+}
+
+function formatCompactNumber(n){
+  try{
+    return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+  }catch(e){
+    return n.toLocaleString();
+  }
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+let dirtyKeys = new Set();
+function tagMovie(movie, status, options){
+  const silent = options && options.silent;
+  const type = movie.mediaType || 'movie';
+  const key = `${type}-${movie.id}`;
+  const existing = tags[key] || {};
+  const year = (movie.release_date || '').slice(0,4) || existing.year || '';
+  // Seen and Ignored entries only ever render as plain text in the drawer —
+  // they never need poster/rating/runtime/language data, unlike Watchlist
+  // and Notify, which show full cards. Not storing it for the (usually
+  // large majority of) Seen/Ignored entries meaningfully reduces total
+  // storage size, which matters directly at scale — localStorage has a
+  // real, hard quota per browser (often just 5-10MB) that a large tagged
+  // library can genuinely hit.
+  const needsFullData = status === 'watchlist' || status === 'notify';
+  tags[key] = needsFullData ? {
+    id: movie.id,
+    mediaType: type,
+    title: movie.title || existing.title,
+    year,
+    status,
+    poster_path: movie.poster_path !== undefined ? movie.poster_path : existing.poster_path,
+    vote_average: typeof movie.vote_average === 'number' ? movie.vote_average : existing.vote_average,
+    vote_count: typeof movie.vote_count === 'number' ? movie.vote_count : existing.vote_count,
+    runtime: typeof movie.runtime === 'number' ? movie.runtime : existing.runtime,
+    original_language: movie.original_language !== undefined ? movie.original_language : existing.original_language,
+    genre_ids: Array.isArray(movie.genre_ids) ? movie.genre_ids : existing.genre_ids
+  } : {
+    id: movie.id,
+    mediaType: type,
+    title: movie.title || existing.title,
+    year,
+    status
+  };
+  dirtyKeys.add(key);
+  if(!silent){
+    saveTags();
+    loadedMovies = loadedMovies.filter(item => keyFor(item) !== key);
+  }
+}
+
+function untagMovie(id){
+  delete tags[id];
+  dirtyKeys.add(id);
+  saveTags();
+}
+
+// Fast path: writes only the record(s) touched since the last save — not
+// the whole dataset — via saveKeysToDB. IndexedDB writes don't block the
+// main thread, and each key is independent, so a reload can never lose it
+// and this stays fast regardless of how large the overall list gets.
+function saveTags(){
+  if(dirtyKeys.size > 0){
+    saveKeysToDB([...dirtyKeys]); // fire-and-forget — IndexedDB handles this reliably in the background
+    dirtyKeys.clear();
+  }
+  renderDrawer();
+}
+
+// Reconciles with storage — pulls in anything saved by another tab/session
+// while this one wasn't focused. Only runs when the tab regains visibility,
+// which is the one point a stale tab could plausibly have drifted from
+// what's actually on disk — not on every click, where the same check would
+// just be wasted work. IndexedDB deletions are native (no separate
+// "pendingDeletions" tracking needed the way the old localStorage merge
+// required), since a deleted key simply isn't returned by the store anymore.
+async function reconcileTagsFromStorage(){
+  try{
+    const currentStored = await loadAllTagsFromDB() || {};
+    tags = { ...currentStored, ...tags };
+  }catch(e){ /* if storage is corrupt/unreadable, keep this tab's own in-memory copy as-is */ }
+  renderDrawer();
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') reconcileTagsFromStorage();
+});
+
+// For periodic checkpoints during longer background operations (watchlist
+// scan progress, self-heal) where merging is worth the occasional cost —
+// unlike the per-click path, these don't run often enough for it to matter.
+async function saveTagsWithReconcile(){
+  await reconcileTagsFromStorage();
+  if(dirtyKeys.size > 0){
+    await saveKeysToDB([...dirtyKeys]);
+    dirtyKeys.clear();
+  } else {
+    await saveAllKeysToDB(); // reconciliation may have pulled in changes this tab didn't originate — safe to persist all as a checkpoint
+  }
+}
+
+document.querySelectorAll('.drawer-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.drawer-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeDrawerTab = btn.dataset.status;
+    drawerVisibleCount = drawerPageSize;
+    document.getElementById('notifyControls').style.display = activeDrawerTab === 'notify' ? 'flex' : 'none';
+    document.getElementById('watchlistControls').style.display = activeDrawerTab === 'watchlist' ? 'flex' : 'none';
+    renderDrawer();
+  });
+});
+
+function renderDrawer(){
+  const allIds = Object.keys(tags);
+  const byStatus = { seen: [], watchlist: [], notify: [], ignore: [] };
+  allIds.forEach(id => { if(byStatus[tags[id].status]) byStatus[tags[id].status].push(id); });
+
+  document.getElementById('totalTagCount').textContent = allIds.length;
+  document.getElementById('countSeen').textContent = byStatus.seen.length;
+  document.getElementById('countWatchlist').textContent = byStatus.watchlist.length;
+  document.getElementById('countNotify').textContent = byStatus.notify.length;
+  document.getElementById('countIgnore').textContent = byStatus.ignore.length;
+
+  // The list itself (sort + DOM build) is expensive with a large tagged
+  // library, and this function runs on every single tag action regardless
+  // of whether the drawer is even open. Skip that work entirely while
+  // closed — counts above are cheap and always kept current, but the
+  // actual list only needs to exist when it's visible.
+  if(!document.getElementById('drawer').classList.contains('open')) return;
+
+  const sortedIds = byStatus[activeDrawerTab]
+    .sort((a,b) => sortableTitle(tags[a].title).localeCompare(sortableTitle(tags[b].title)));
+  const list = document.getElementById('watchedList');
+
+  if(sortedIds.length === 0){
+    const labels = { seen: 'seen', watchlist: 'watchlisted', notify: 'on your notify list', ignore: 'ignored' };
+    list.innerHTML = `<div class="empty-state" style="padding:20px 0;">Nothing ${labels[activeDrawerTab]} yet.</div>`;
+    return;
+  }
+
+  const visibleIds = sortedIds.slice(0, drawerVisibleCount);
+  const remaining = sortedIds.length - visibleIds.length;
+
+  list.innerHTML = visibleIds.map(id => {
+    const t = tags[id];
+    const url = `https://www.themoviedb.org/${t.mediaType === 'tv' ? 'tv' : 'movie'}/${t.id}`;
+    return `
+      <div class="watched-item">
+        <div><a class="wi-title" href="${url}" target="_blank" rel="noopener">${escapeHtml(t.title)}</a><span class="wi-year">${t.year || ''}</span></div>
+        <button data-id="${id}">remove</button>
+      </div>
+    `;
+  }).join('');
+
+  if(remaining > 0){
+    list.innerHTML += `<button class="drawer-show-more" id="drawerShowMore">Show ${Math.min(remaining, drawerPageSize)} more (${remaining} left)</button>`;
+  }
+
+  list.querySelectorAll('button[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => untagMovie(btn.dataset.id));
+  });
+  const showMoreBtn = document.getElementById('drawerShowMore');
+  if(showMoreBtn){
+    showMoreBtn.addEventListener('click', () => {
+      drawerVisibleCount += drawerPageSize;
+      renderDrawer();
+    });
+  }
+}
+
+document.getElementById('drawerToggle').addEventListener('click', () => {
+  document.getElementById('drawer').classList.add('open');
+  renderDrawer();
+});
+document.getElementById('drawerClose').addEventListener('click', () => {
+  document.getElementById('drawer').classList.remove('open');
+});
+
+const backToTopBtn = document.getElementById('backToTop');
+backToTopBtn.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+window.addEventListener('scroll', () => {
+  backToTopBtn.style.display = window.scrollY > 600 ? 'block' : 'none';
+});
+
+function exportTagsAsJson(){
+  const blob = new Blob([JSON.stringify(tags, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'unseen-lists.json';
+  a.click();
+}
+document.getElementById('exportBtn').addEventListener('click', exportTagsAsJson);
+document.getElementById('quickExportBtn').addEventListener('click', exportTagsAsJson);
+
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try{
+      const imported = JSON.parse(evt.target.result);
+      // support importing the current composite-key format, or older flat/plain-id exports
+      for(const rawId in imported){
+        const entry = imported[rawId];
+        const key = /^\d+$/.test(rawId) ? `movie-${rawId}` : rawId;
+        const normalized = entry.status ? { ...entry } : { title: entry.title, year: entry.year, status: 'seen' };
+        if(normalized.id === undefined) normalized.id = Number(key.split('-').slice(1).join('-')) || Number(rawId) || undefined;
+        if(!normalized.mediaType) normalized.mediaType = key.startsWith('tv-') ? 'tv' : 'movie';
+        tags[key] = normalized;
+        dirtyKeys.add(key);
+      }
+      saveTags();
+      statusLine.textContent = 'Import complete.';
+    }catch(err){
+      alert('Could not parse that file as JSON.');
+    }
+  };
+  reader.readAsText(file);
+});
+
+renderDrawer();
+
+// ---- Notify list: availability checking ----
+// Runs only while this page is open — there's no way for a static local
+// file to wake up in the background. On load, if 24+ hours have passed
+// since the last check (or it's never run), it checks automatically.
+// A manual "Check availability now" button covers everything in between.
+
+const NOTIFY_CHECK_STORAGE = 'unseen_last_notify_check';
+const NOTIFY_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+const checkNowBtn = document.getElementById('checkNowBtn');
+const scanWatchlistBtn = document.getElementById('scanWatchlistBtn');
+const scanStatusLabel = document.getElementById('scanStatusLabel');
+const enableNotifBtn = document.getElementById('enableNotifBtn');
+const lastCheckLabel = document.getElementById('lastCheckLabel');
+const availabilityBanner = document.getElementById('availabilityBanner');
+
+function updateLastCheckLabel(){
+  const last = parseInt(localStorage.getItem(NOTIFY_CHECK_STORAGE), 10);
+  if(!last){ lastCheckLabel.textContent = 'Never checked yet.'; return; }
+  const mins = Math.round((Date.now() - last) / 60000);
+  const text = mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.round(mins/60)} hr ago` : `${Math.round(mins/1440)} day(s) ago`;
+  lastCheckLabel.textContent = `Last checked: ${text}`;
+}
+updateLastCheckLabel();
+
+function updateEnableNotifBtn(){
+  if(!('Notification' in window)){
+    enableNotifBtn.textContent = 'Alerts unsupported in this browser';
+    enableNotifBtn.disabled = true;
+  } else if(Notification.permission === 'granted'){
+    enableNotifBtn.textContent = 'Browser alerts enabled ✓';
+  } else if(Notification.permission === 'denied'){
+    enableNotifBtn.textContent = 'Alerts blocked — check browser settings';
+  } else {
+    enableNotifBtn.textContent = 'Enable browser alerts';
+  }
+}
+updateEnableNotifBtn();
+
+enableNotifBtn.addEventListener('click', async () => {
+  if(!('Notification' in window)) return;
+  await Notification.requestPermission();
+  updateEnableNotifBtn();
+});
+
+function isNowAvailable(detail, mediaType){
+  if(!detail) return false;
+  if(mediaType === 'tv'){
+    const availableStatuses = ['Returning Series', 'Ended', 'Canceled', 'Pilot'];
+    if(detail.status) return availableStatuses.includes(detail.status);
+    return (detail.first_air_date || '') <= todayISO && !!detail.first_air_date;
+  }
+  if(detail.status) return detail.status === 'Released';
+  return (detail.release_date || '') <= todayISO && !!detail.release_date;
+}
+
+// Reverse of the notify check: some watchlist entries predate the Notify
+// feature and were saved back when everything just landed on the Watchlist
+// tab regardless of release status. This finds any of those that are
+// actually still unreleased and demotes them to Notify. Scans the entire
+// watchlist rather than pre-filtering by year — an old stored year can
+// still coexist with a genuine "Post Production" status on TMDb (delayed
+// re-releases, restorations, messy catalog entries), so a year filter
+// would miss exactly those outliers. This means one TMDb request per
+// watchlist title, so a large watchlist can take a few minutes — progress
+// is saved every 20 titles, so closing the tab mid-scan doesn't lose what
+// was already found.
+async function scanWatchlistForUnreleased(){
+  const key = apiKeyInput.value.trim();
+  if(!key){
+    alert('Paste your TMDb API key at the top first.');
+    return;
+  }
+  const candidates = Object.keys(tags).filter(k => tags[k].status === 'watchlist');
+
+  if(candidates.length === 0){
+    alert('Your watchlist is empty — nothing to scan.');
+    return;
+  }
+  if(!confirm(`This will check all ${candidates.length} watchlist titles against TMDb, one at a time — it may take a few minutes. Continue?`)) return;
+
+  scanWatchlistBtn.disabled = true;
+  const movedToNotify = [];
+
+  for(let i = 0; i < candidates.length; i++){
+    scanWatchlistBtn.textContent = `Scanning ${i+1}/${candidates.length}...`;
+    const tagKey = candidates[i];
+    const entry = tags[tagKey];
+    const mediaType = entry.mediaType || 'movie';
+    const detail = await tmdbFetch(`/${mediaType}/${entry.id}`);
+    if(detail && !isNowAvailable(detail, mediaType)){
+      tags[tagKey] = { ...entry, status: 'notify' };
+      dirtyKeys.add(tagKey);
+      movedToNotify.push(entry.title);
+    }
+    if(i % 20 === 19) saveTagsWithReconcile(); // save progress periodically, merging with current storage instead of overwriting it
+  }
+
+  scanWatchlistBtn.disabled = false;
+  scanWatchlistBtn.textContent = 'Scan watchlist for unreleased titles';
+  scanStatusLabel.textContent = `Last scan: checked ${candidates.length} title(s), moved ${movedToNotify.length} to Notify.`;
+
+  if(movedToNotify.length > 0){
+    saveTags();
+    alert(`Moved ${movedToNotify.length} unreleased title(s) to Notify:\n${movedToNotify.join(', ')}`);
+  } else {
+    saveTags();
+    alert(`Checked ${candidates.length} watchlist title(s) — everything is actually already released.`);
+  }
+}
+
+scanWatchlistBtn.addEventListener('click', scanWatchlistForUnreleased);
+
+['filterMovies', 'filterSeries', 'filterShorts', 'filterUnreleased'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    if(mode === 'watchlist') renderWatchlist();
+  });
+});
+
+function showAvailabilityBanner(titles){
+  availabilityBanner.innerHTML = `
+    <span>🎬 Now available — moved to your Watchlist: ${titles.map(t => escapeHtml(t)).join(', ')}</span>
+    <button id="dismissBanner" title="Dismiss">×</button>
+  `;
+  availabilityBanner.style.display = 'flex';
+  document.getElementById('dismissBanner').addEventListener('click', () => {
+    availabilityBanner.style.display = 'none';
+  });
+}
+
+async function checkNotifyList(manual){
+  const key = apiKeyInput.value.trim();
+  if(!key){
+    if(manual) alert('Paste your TMDb API key at the top first.');
+    return;
+  }
+  const notifyKeys = Object.keys(tags).filter(k => tags[k].status === 'notify');
+  if(notifyKeys.length === 0){
+    if(manual) alert('Nothing on your notify list yet.');
+    localStorage.setItem(NOTIFY_CHECK_STORAGE, String(Date.now()));
+    updateLastCheckLabel();
+    return;
+  }
+
+  if(manual){ checkNowBtn.disabled = true; checkNowBtn.textContent = 'Checking...'; }
+
+  const newlyAvailable = [];
+  for(const tagKey of notifyKeys){
+    const entry = tags[tagKey];
+    const mediaType = entry.mediaType || 'movie';
+    const detail = await tmdbFetch(`/${mediaType}/${entry.id}`);
+    if(isNowAvailable(detail, mediaType)){
+      tags[tagKey] = { ...entry, status: 'watchlist' };
+      dirtyKeys.add(tagKey);
+      newlyAvailable.push(entry.title);
+    }
+  }
+
+  localStorage.setItem(NOTIFY_CHECK_STORAGE, String(Date.now()));
+  updateLastCheckLabel();
+
+  if(newlyAvailable.length > 0){
+    saveTags();
+    showAvailabilityBanner(newlyAvailable);
+    if('Notification' in window && Notification.permission === 'granted'){
+      new Notification('New titles available', {
+        body: newlyAvailable.join(', ')
+      });
+    }
+  }
+
+  if(manual){
+    checkNowBtn.disabled = false;
+    checkNowBtn.textContent = 'Check availability now';
+    if(newlyAvailable.length === 0) alert('Checked — nothing on your notify list is available yet.');
+  }
+}
+
+checkNowBtn.addEventListener('click', () => checkNotifyList(true));
+
+// Auto-check on load if 24+ hours have passed (or it's never run)
+(function autoCheckNotifyList(){
+  const last = parseInt(localStorage.getItem(NOTIFY_CHECK_STORAGE), 10);
+  if(last && (Date.now() - last) < NOTIFY_INTERVAL_MS) return;
+  const hasNotifyItems = Object.values(tags).some(t => t.status === 'notify');
+  const hasKey = apiKeyInput.value.trim().length > 0;
+  if(hasNotifyItems && hasKey) checkNotifyList(false);
+})();
+
+</script>
+
+</body>
+</html>

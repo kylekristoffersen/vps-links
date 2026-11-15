@@ -1,0 +1,25 @@
+# In-page login service for Kyle's tools (gate/toolgate.py), asked by nginx
+# before every page. Standard library only, system Python 3.8.
+[Unit]
+Description=toolgate - in-page login for Kyle's tools
+After=network.target
+
+[Service]
+User=toolgate
+Group=toolgate
+Environment=GATE_ADMIN_FILE=/etc/nginx/.admin-tools-htpasswd
+Environment=GATE_TEAM_FILE=/etc/nginx/.veit-tools-htpasswd
+Environment=GATE_KEY_FILE=/etc/toolgate/secret
+Environment=GATE_MAIN_HOST=107-173-7-177.sslip.io
+Environment=GATE_LISTEN=127.0.0.1:8600
+ExecStart=/usr/bin/python3 /opt/vps-links/gate/toolgate.py
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+
+[Install]
+WantedBy=multi-user.target

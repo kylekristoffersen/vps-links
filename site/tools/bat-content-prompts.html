@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BAT Content Prompts</title>
+<style>
+  :root{
+    --bg:#151815; --panel:#1e2320; --ink:#e9ede9; --sub:#909a90;
+    --accent:#4c9a5f; --accent-dark:#7fc794; --border:#333a34;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--ink);
+  }
+  header{
+    padding:26px 32px 16px; border-bottom:1px solid var(--border); background:var(--panel);
+  }
+  header h1{margin:0 0 4px; font-size:20px;}
+  header p{margin:0; color:var(--sub); font-size:13.5px;}
+
+  .tabs{
+    display:flex; gap:6px; padding:16px 32px; background:var(--panel);
+    border-bottom:1px solid var(--border); overflow-x:auto;
+  }
+  .tab-btn{
+    flex:1; min-width:150px; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+    background:#232823; cursor:pointer; font-size:13px; color:var(--sub); font-weight:500;
+    transition:background .15s;
+  }
+  .tab-btn:hover{background:#2a302a;}
+  .tab-btn.active{border-color:var(--accent); background:#213326; color:var(--accent-dark); font-weight:700;}
+
+  main{max-width:1180px; margin:0 auto; padding:24px 32px 80px;}
+  .panel-head{margin-bottom:14px;}
+  .panel-head h2{margin:0 0 6px; font-size:17px;}
+  .panel-head .desc{color:var(--sub); font-size:13.5px; margin:0; line-height:1.5;}
+
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start;}
+  @media (max-width:860px){ .split{grid-template-columns:1fr;} }
+
+  .col{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; display:flex; flex-direction:column;}
+  .col h3{margin:0 0 10px; font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--sub);}
+
+  textarea{
+    width:100%; flex:1; min-height:460px; border:1px solid var(--border); border-radius:8px;
+    padding:12px 14px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px; line-height:1.6; resize:vertical; background:#12140f; color:var(--ink);
+  }
+  textarea:focus{outline:none; border-color:var(--accent);}
+
+  .prompt-box{
+    background:#12140f; border:1px solid var(--border); border-radius:8px; padding:14px 16px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px; line-height:1.6;
+    white-space:pre-wrap; min-height:460px; max-height:640px; overflow-y:auto; color:#c9d0c8; flex:1;
+  }
+  .fill{color:var(--accent-dark); background:#213326; border-radius:3px; padding:0 2px;}
+
+  .row{display:flex; gap:10px; align-items:center; margin-top:14px;}
+  button{
+    border:none; border-radius:7px; padding:9px 18px; font-size:13px; font-weight:600;
+    cursor:pointer; transition:opacity .15s; background:var(--accent); color:#0c100c;
+  }
+  button:hover{opacity:.85;}
+  .btn-secondary{background:#2a302a; color:var(--sub); border:1px solid var(--border);}
+  .hint{font-size:12px; color:var(--sub); margin-top:8px; line-height:1.5;}
+  .copied-msg{font-size:12px; color:var(--accent-dark); font-weight:600; display:none;}
+  .note{
+    background:#332c18; border:1px solid #5c4e26; border-radius:8px; padding:10px 14px;
+    font-size:12.5px; color:#e2c97a; margin-top:14px; line-height:1.5;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BAT Content Prompts</h1>
+  <p>Quick access to the four prompts used in the social content workflow. Paste your material on the left, copy the finished prompt on the right.</p>
+</header>
+
+<div class="tabs" id="tabs"></div>
+
+<main id="main"></main>
+
+<script>
+const STAGES = [
+  {
+    label: "1. Frameworks",
+    title: "Generate frameworks",
+    desc: "Run this first, with the source article loaded into the project. Produces 5 candidate post frameworks for the team to accept, reject, or edit.",
+    hasInput: false,
+    prompt: `PURPOSE
+-------
+This prompt generates several frameworks to be used as the basis for a separate post-writing prompt. It does not produce finished posts. Each framework provides the structural and strategic foundation needed to write a compelling, on-brand LinkedIn post. Once the frameworks are generated, they can be copied individually into a writing prompt to produce the final post copy.
+
+SOURCE MATERIAL
+---------------
+The source material is the academic article attached to this message as a PDF.
+
+SOURCE LINK
+-----------
+Before the first framework, place a "Source link" line at the very top of your output containing a URL to the full version of the attached article (for example the publisher's page or the DOI link). Search for it, open it, and confirm it points to the same article as the attached PDF (matching title, authors, and year) before including it. Provide the link as a bare URL. If no matching full-text URL can be found and verified, state that plainly on that line instead of guessing or reconstructing one.
+
+OUR IDENTITY
+------------
+We are BAT Poultry Scales, a poultry technology company producing digital weighing solutions for the commercial poultry industry. Our posts should reflect genuine industry expertise and a commitment to helping producers make better, data-driven decisions.
+
+TARGET AUDIENCE
+---------------
+Poultry producers and farmers, hatchery managers, and industry executives and integrators.
+
+PRIMARY GOALS
+-------------
+Thought leadership and sparking discussion, educating the industry, challenging conventional practices, and promoting data-driven decision making.
+
+TONE AND TECHNICAL LEVEL
+------------------------
+Maintain some technical terminology to reinforce authority, but keep the content accessible to a broader industry audience. Avoid being overly academic.
+
+PERSPECTIVE AND FRAMING
+-----------------------
+Write from the perspective of a knowledgeable industry partner: helpful, informed, and forward-thinking. Where relevant, highlight the impact of grow-out farm management on results, briefly acknowledging earlier production phases as contributing factors rather than primary focus areas.
+
+WEIGHT MONITORING INTEGRATION
+------------------------------
+The importance of monitoring flock performance and welfare through weight data should be a recurring, gently woven element across posts. This should feel natural and educational, never promotional. The goal is to reinforce the value of continuous weight monitoring without naming specific products or features.
+
+PRODUCT INTEGRATION
+--------------------
+Subtle. The primary goal is always to educate the reader. Commercial intent should not be detectable.
+
+POST VARIETY
+-------------
+Use the provided source material as the primary reference. Supporting studies or industry data may be incorporated where they strengthen a point.
+
+NUMBER OF FRAMEWORKS
+---------------------
+Generate 5 post frameworks, each built around a distinct topic drawn from the source material.
+
+FORMAT: EACH FRAMEWORK MUST INCLUDE
+-------------------------------------
+Title
+A short internal reference title for the post topic.
+
+Core Insight
+A concise summary of the most compelling or counterintuitive finding from the article that this post will be built around. Framed in plain language and explaining why the finding matters to the target audience.
+
+Key Data Points
+The specific statistics, estimates, correlations or study details from the source material that should be referenced or woven into the post. Include exact figures where available.
+
+Strategic Angle
+A brief note on the narrative approach: what assumption is being challenged, what behaviour is being encouraged, and how weight monitoring connects naturally to the topic.
+
+Hook Direction
+A suggested direction or draft for the opening line, designed to work within approximately 120 characters. It must function as a strong declarative statement or counterintuitive insight that compels the reader to expand the post. It must not be phrased as a question.
+
+Closing Direction
+A suggested direction for the closing statement. A declarative takeaway that leaves the reader with something to act on mentally, with no explicit call to action.
+
+POST LENGTH TARGET
+--------------------
+Short to mid-length when written. Frameworks should provide enough detail to produce a post that is concise but substantive.
+
+FORMATTING RULES FOR THE FINISHED POST (to be passed to the writing prompt)
+-----------------------------------------------------------------------------
+- No hashtags
+- No headlines or bold section titles within the post body
+- Flowing prose or short punchy paragraphs, not bullet points
+- No em dashes; use commas, parentheses, colons or restructured sentences instead
+- Post from the company voice: authoritative, knowledgeable, and genuinely invested in industry progress
+- Close with a declarative statement, not a question`,
+    note: null
+  },
+  {
+    label: "2. Company Post",
+    title: "Draft the company post",
+    desc: "Run after the team has accepted or edited a framework. Paste the chosen framework on the left; it drops into the theme field.",
+    hasInput: true,
+    inputLabel: "Accepted framework",
+    inputPlaceholder: "Paste the framework the team accepted (edited as needed)...",
+    before: `<context>
+You are a senior social media marketing copywriter for BAT poultry scales. You are an expert at crafting relevant, easy-to-read marketing copy for the poultry industry that drives engagement and brand awareness on LinkedIn.
+</context>
+
+<task>
+Your task is to write an intriguing, educational post that encourages readers to interact with the post by clicking read more. Your output is a LinkedIn post that relates to the provided theme, and draws heavily from supplemental information. Keep sentences and paragraphs short. Length of post: up to 1800 to 2700 characters with spaces.
+</task>
+
+<resources>
+Draw primarily from the attached material and locate at least one additional supporting source. It may come from project knowledge or an external source, but it must be peer-reviewed academic literature.
+
+Cite inline in the body as (Author et al., year). List every cited work in a Cited Sources section at the end, numbered, in this format:
+Author, A. B., Author, C. D., & Author, E. F. (year). Full article title. Journal Name, volume(issue), page range or article number.
+
+Rules for that section:
+List all authors up to twelve. Use "et al." only beyond that.
+Give the full article title exactly as published, not a shortened version.
+Give the journal's full name, not an abbreviation.
+Include volume and issue or article number. Never omit them because they were not immediately to hand.
+Do not include URLs. Include the DOI as a bare string only if it has been read off the source document.
+Every source listed must have been opened and read. Do not list a work cited secondhand inside another paper unless it has been retrieved and checked directly.
+State explicitly, outside the post, any bibliographic detail that could not be verified rather than filling it in from inference.
+</resources>
+
+<style>
+Make the provided information feel useful and insightful, but not pushy. Use a professional, scientific style appropriate for a technology company but also keep the message comprehensible to the general public. Do not use dashes in sentence structure. Do not use hashtags or CTA questions at the end. Do not use heavy formatting such as bulleting and indentation.
+</style>
+
+<constraints_considerations>
+Begin the post with an engaging hook between 200 and 250 characters to get the reader to click "See more...". This can be a bold, intriguing or even divisive statement. Prioritize interesting material over length. The main purpose of this post is to educate, but it is important to tie the narrative back to the importance of properly collected poultry weight data and its ability to help detect these flock development issues and later confirm that such issues have been resolved. Where it genuinely fits the theme, connect this to whichever product from the list below is actually relevant to the topic; do not force a mention of a product that doesn't apply to the theme.
+</constraints_considerations>
+
+<theme>
+`,
+    after: `
+</theme>
+
+<underlying_message>
+Weight data is the alpha and omega of poultry farming. It is the clearest indicator of flock welfare, performance, and profitability. BAT scales are the most trusted scales for collecting this data, confirmed by their use in scientific studies on flock welfare, where they play a pivotal role in mapping the effects that different circumstances and variables have on bird health and development.
+</underlying_message>
+
+<product_promoted>
+BAT1 manual poultry scales. BAT1 Sorting Machine. BAT2 Connect automatic scales. BAT Cloud.
+</product_promoted>`,
+    emptyFill: "[Paste the accepted/edited framework here]",
+    projectUrl: "claude://claude.ai/project/c2780601-c87d-4a73-a086-bb269047eb5a",
+    note: null
+  },
+  {
+    label: "3. CEO Version",
+    title: "CEO voice version",
+    desc: "Run after the company post is approved and posted. Paste that post on the left; it drops into the text field.",
+    hasInput: true,
+    inputLabel: "Approved company post",
+    inputPlaceholder: "Paste the final, approved company post...",
+    before: `<task>
+Help me write a LinkedIn post based on the following text.
+</task>
+
+<style>
+To create high-performing LinkedIn posts, start with a bold hook that captures attention in the first 1 to 2 lines, such as a surprising fact or a thought-provoking question. Follow it up by sharing valuable insights, tips, or trends that address your audience's needs or pain points, keeping the content relevant to current industry developments. Incorporating sentimental or fun personal elements, focus on offering value first. Aim to keep the post concise (125 to 250 words), use short paragraphs of 2 to 3 sentences that flow naturally from one to the next. Avoid isolated one sentence paragraphs unless used sparingly for emphasis, and use 1 to 2 emojis to highlight key points without overdoing it. The post should read as continuous professional insight, not a series of punchy fragments. Transitions between ideas matter. Prioritize restructuring the information provided so that the result looks and reads differently than the source. When writing LinkedIn posts from source text or research, do NOT mirror or paraphrase the provided text closely. Instead, reframe the content as if Petr Veit independently attended the same presentation or meeting and is reporting his own takeaways. Use the data points and findings, but reconstruct the narrative from his perspective. The post should feel like a separate firsthand account, not a rewrite of the source material. Use this attended-the-same-presentation framing only as an internal device to produce an independent voice; the post itself should not state or imply that he actually attended a specific event. Do not follow the same paragraph order or argument sequence as the source text; lead with whichever detail Petr would find most memorable rather than however the source opens. No sentence in the output should share more than about five consecutive words with the source text; if a sentence is close to the source, rewrite it from a different angle instead of swapping synonyms. Include at least one genuine reaction, opinion, or business implication that is not present anywhere in the source material. The reader has no prior exposure to this material and was not present for anything being referenced; state each statistic, finding, or detail in full before reacting to it, and never open with, or elsewhere use, a reaction that points back to something not yet stated (for example, do not write "That number surprised me" or "That leg health figure caught my eye" before the number or figure has actually been given). Do not use CTA questions at the end. By following these best practices, your posts will capture attention, foster engagement, and provide value, increasing visibility and interaction on the platform.
+</style>
+
+<citations>
+Cite inline in the body as (Author et al., year). List every cited work in a Cited Sources section at the end, numbered, in this format:
+Author, A. B., Author, C. D., & Author, E. F. (year). Full article title. Journal Name, volume(issue), page range or article number.
+
+Rules for that section:
+List all authors up to twelve. Use "et al." only beyond that.
+Give the full article title exactly as published, not a shortened version.
+Give the journal's full name, not an abbreviation.
+Include volume and issue or article number. Never omit them because they were not immediately to hand.
+Do not include URLs. Include the DOI as a bare string only if it has been read off the source document.
+</citations>
+
+<text>
+`,
+    after: `
+</text>`,
+    emptyFill: "[Paste the approved company post here]",
+    projectUrl: "claude://claude.ai/project/019711b2-9abe-7163-8070-9fe004da971a",
+    note: null
+  },
+  {
+    label: "4. Sales Version",
+    title: "Sales-simplified version",
+    desc: "Run after the CEO version is approved. Paste the original company post (full facts) and Petr Veit's approved version (style reference only) on the left.",
+    hasInput: true,
+    multiField: true,
+    fields: [
+      {
+        key: "company",
+        label: "Company post (source material)",
+        placeholder: "Paste the original company post...",
+        emptyFill: "[Paste the original company post here]"
+      },
+      {
+        key: "ceo",
+        label: "Petr Veit's version (style reference only)",
+        placeholder: "Paste Petr Veit's approved post...",
+        emptyFill: "[Paste Petr Veit's approved post here]"
+      }
+    ],
+    buildPrompt: (v) => `<task>
+Write a LinkedIn post based on the material below.
+</task>
+
+<style>
+To create high-performing LinkedIn posts, start with a bold hook that captures attention in the first 1 to 2 lines, such as a surprising fact or a thought-provoking question. Follow it up by sharing valuable insights, tips, or trends that address your audience's needs or pain points. Keep the content relevant to current industry developments. Incorporate sentimental or fun personal elements, focus on offering value first. Aim to keep the post concise (125 to 250 words), breaking up text for readability and using 1 to 2 emojis to highlight key points without overdoing it. Use short sentences, ideally under 20 words each. Prefer common, everyday words over technical or academic ones. If a technical term is necessary, explain it in plain language immediately after. Avoid complex sentence structures with multiple clauses. Write as if explaining to someone who learned English as a second language. Use concrete examples and numbers rather than abstract descriptions. Do not use CTA questions at the end. By following these best practices, your posts will capture attention, foster engagement, and provide value, increasing visibility and interaction on the platform. Prioritize restructuring the information provided so that the result looks and reads differently than both texts below. Do not mirror or paraphrase either text closely. Instead, reframe the content as if your head of sales independently attended the same presentation as the people behind both texts below and is relaying his own takeaways in his own words and thought process, not summarizing or simplifying either one. Use this framing only as an internal device to produce an independent voice; the post itself should not state or imply that he actually attended a specific event. Do not follow the same paragraph order or argument sequence as either text below; lead with whichever detail he would find most memorable rather than however either one opens. No sentence in the output should share more than about five consecutive words with either text below; if a sentence is close to either source, rewrite it from a different angle instead of swapping synonyms. Include at least one genuine reaction, opinion, or practical implication for producers that is not present in either text below. The reader has no prior exposure to this material and was not present for anything being referenced; state each statistic, finding, or detail in full before reacting to it, and never open with, or elsewhere use, a reaction that points back to something not yet stated (for example, do not write "That number surprised me" or "That leg health figure caught my eye" before the number or figure has actually been given). Also take extra effort to use simple language that non-native English speakers can understand.
+</style>
+
+<source_material>
+Draw the facts, statistics, and findings for this post primarily from this section. This is the original company post and contains the fullest scope of information available.
+
+${v.company}
+</source_material>
+
+<reference_style_example>
+This is Petr Veit's approved version of the same story. It exists only to confirm the tone and independence bar this post should also clear. Do not draw facts, phrasing, structure, or specific reactions from it, and do not treat it as something to summarize or simplify.
+
+${v.ceo}
+</reference_style_example>
+
+<citations>
+Cite inline in the body as (Author et al., year). List every cited work in a Cited Sources section at the end, numbered, in this format:
+Author, A. B., Author, C. D., & Author, E. F. (year). Full article title. Journal Name, volume(issue), page range or article number.
+
+Rules for that section:
+List all authors up to twelve. Use "et al." only beyond that.
+Give the full article title exactly as published, not a shortened version.
+Give the journal's full name, not an abbreviation.
+Include volume and issue or article number. Never omit them because they were not immediately to hand.
+Do not include URLs. Include the DOI as a bare string only if it has been read off the source document.
+</citations>`,
+    projectUrl: "claude://claude.ai/project/01973593-387e-72d0-9bcd-3b906572deda",
+    note: null
+  }
+];
+
+let current = 0;
+let inputs = ["", "", "", { company: "", ceo: "" }]; // per-stage input text, kept in memory while the page is open
+
+function renderTabs(){
+  const el = document.getElementById("tabs");
+  el.innerHTML = STAGES.map((s,i)=>
+    `<button class="tab-btn ${i===current?'active':''}" onclick="goTo(${i})">${s.label}</button>`
+  ).join("");
+}
+
+function goTo(i){ current = i; render(); }
+
+function assembledPrompt(s, i){
+  if(!s.hasInput) return s.prompt;
+  if(s.multiField){
+    const v = {};
+    s.fields.forEach(f=>{
+      const raw = (inputs[i][f.key] || "").trim();
+      v[f.key] = raw || f.emptyFill;
+    });
+    return s.buildPrompt(v);
+  }
+  const val = inputs[i].trim();
+  return s.before + (val || s.emptyFill) + s.after;
+}
+
+function render(){
+  renderTabs();
+  const s = STAGES[current];
+  const el = document.getElementById("main");
+
+  if(!s.hasInput){
+    el.innerHTML = `
+      <div class="panel-head">
+        <h2>${s.title}</h2>
+        <p class="desc">${s.desc}</p>
+      </div>
+      <div class="col" style="max-width:820px;">
+        <h3>Prompt</h3>
+        <div class="prompt-box" id="promptBox">${escapeHtml(assembledPrompt(s, current))}</div>
+        <div class="row">
+          <button onclick="doCopy()">Copy prompt</button>
+          <span class="copied-msg" id="copiedMsg">Copied</span>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if(s.multiField){
+    el.innerHTML = `
+      <div class="panel-head">
+        <h2>${s.title}</h2>
+        <p class="desc">${s.desc}</p>
+      </div>
+      <div class="split">
+        <div class="col">
+          ${s.fields.map((f,fi)=>`
+            <h3>${f.label}</h3>
+            <textarea id="inputArea_${fi}" placeholder="${f.placeholder}" style="min-height:200px; margin-bottom:16px;">${escapeHtml(inputs[current][f.key])}</textarea>
+          `).join("")}
+          <div class="row">
+            <button class="btn-secondary" onclick="clearInput()">Clear both</button>
+          </div>
+        </div>
+        <div class="col">
+          <h3>Prompt</h3>
+          <div class="prompt-box" id="promptBox">${escapeHtml(assembledPrompt(s, current))}</div>
+          <div class="row">
+            ${s.projectUrl
+              ? `<button onclick="copyAndOpen()">Copy prompt &amp; open in Claude</button>`
+              : `<button onclick="doCopy()">Copy prompt</button>`}
+            <span class="copied-msg" id="copiedMsg">Copied</span>
+          </div>
+          ${s.projectUrl ? `<div class="hint">Copies the prompt, then opens the project in the Claude Desktop app (requires it to be installed). Paste once you're there, preloading isn't supported by Claude's link scheme.</div>` : ""}
+          ${s.note ? `<div class="note">${s.note}</div>` : ""}
+        </div>
+      </div>`;
+
+    s.fields.forEach((f,fi)=>{
+      document.getElementById(`inputArea_${fi}`).addEventListener("input", e=>{
+        inputs[current][f.key] = e.target.value;
+        document.getElementById("promptBox").textContent = assembledPrompt(s, current);
+      });
+    });
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="panel-head">
+      <h2>${s.title}</h2>
+      <p class="desc">${s.desc}</p>
+    </div>
+    <div class="split">
+      <div class="col">
+        <h3>${s.inputLabel}</h3>
+        <textarea id="inputArea" placeholder="${s.inputPlaceholder}">${escapeHtml(inputs[current])}</textarea>
+        <div class="row">
+          <button class="btn-secondary" onclick="clearInput()">Clear</button>
+        </div>
+      </div>
+      <div class="col">
+        <h3>Prompt</h3>
+        <div class="prompt-box" id="promptBox">${escapeHtml(assembledPrompt(s, current))}</div>
+        <div class="row">
+          ${s.projectUrl
+            ? `<button onclick="copyAndOpen()">Copy prompt &amp; open in Claude</button>`
+            : `<button onclick="doCopy()">Copy prompt</button>`}
+          <span class="copied-msg" id="copiedMsg">Copied</span>
+        </div>
+        ${s.projectUrl ? `<div class="hint">Copies the prompt, then opens the project in the Claude Desktop app (requires it to be installed). Paste once you're there, preloading isn't supported by Claude's link scheme.</div>` : ""}
+        ${s.note ? `<div class="note">${s.note}</div>` : ""}
+      </div>
+    </div>`;
+
+  document.getElementById("inputArea").addEventListener("input", e=>{
+    inputs[current] = e.target.value;
+    document.getElementById("promptBox").textContent = assembledPrompt(s, current);
+  });
+}
+
+function clearInput(){
+  const s = STAGES[current];
+  if(s.multiField){
+    s.fields.forEach(f=>{ inputs[current][f.key] = ""; });
+  } else {
+    inputs[current] = "";
+  }
+  render();
+}
+
+function doCopy(){
+  const s = STAGES[current];
+  const text = assembledPrompt(s, current);
+  navigator.clipboard.writeText(text).then(()=>{
+    const msg = document.getElementById("copiedMsg");
+    msg.style.display = "inline";
+    setTimeout(()=>msg.style.display="none", 1800);
+  });
+}
+
+function copyAndOpen(){
+  const s = STAGES[current];
+  const text = assembledPrompt(s, current);
+  navigator.clipboard.writeText(text).then(()=>{
+    const msg = document.getElementById("copiedMsg");
+    msg.style.display = "inline";
+    setTimeout(()=>msg.style.display="none", 1800);
+    if(s.projectUrl){ window.location.href = s.projectUrl; }
+  });
+}
+
+function escapeHtml(str){
+  return (str||"").replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+
+render();
+</script>
+</body>
+</html>

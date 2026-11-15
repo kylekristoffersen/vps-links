@@ -14,8 +14,6 @@
     --line: #e3e1da;
     --accent: #2f6f4e;
     --accent-soft: #e4efe8;
-    --admin: #8a4b14;
-    --admin-soft: #f6eadc;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -26,8 +24,6 @@
       --line: #33332f;
       --accent: #7cc49c;
       --accent-soft: #1f3328;
-      --admin: #e3a86e;
-      --admin-soft: #3a2a1b;
     }
   }
   * { box-sizing: border-box; }
@@ -37,62 +33,122 @@
     color: var(--text);
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  main { max-width: 640px; margin: 0 auto; padding: 48px 16px 64px; }
-  h1 { font-size: 1.6rem; margin: 0 0 4px; letter-spacing: -0.01em; }
-  .sub { color: var(--muted); margin: 0 0 32px; font-size: 0.95rem; }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  main { max-width: 720px; margin: 0 auto; padding: 40px 16px 64px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+  h1 { font-size: 1.6rem; margin: 0; letter-spacing: -0.01em; }
+  header a { color: var(--muted); font-size: 0.9rem; }
+  h2 {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin: 32px 0 10px; font-weight: 600;
+  }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  @media (min-width: 620px) { ul.grid { grid-template-columns: 1fr 1fr; } }
   a.tool {
-    display: block;
+    display: block; height: 100%;
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 12px;
-    padding: 18px 20px;
+    padding: 16px 18px;
     color: inherit;
     text-decoration: none;
     transition: border-color .15s, transform .15s;
   }
   a.tool:hover, a.tool:focus-visible { border-color: var(--accent); transform: translateY(-1px); }
   a.tool:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .name { font-weight: 600; font-size: 1.1rem; }
-  .desc { color: var(--muted); margin: 4px 0 8px; font-size: 0.95rem; }
-  .url { font: 0.82rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); word-break: break-all; }
-  .badge {
-    font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px;
-    background: var(--accent-soft); color: var(--accent); white-space: nowrap;
+  .name { font-weight: 600; font-size: 1.05rem; }
+  .desc { color: var(--muted); margin: 4px 0 0; font-size: 0.92rem; }
+  .note {
+    display: inline-block; margin-top: 8px; font-size: 0.75rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent);
   }
-  .badge.admin { background: var(--admin-soft); color: var(--admin); }
-  footer { margin-top: 32px; color: var(--muted); font-size: 0.82rem; }
+  .local {
+    background: transparent; border: 1px dashed var(--line); border-radius: 12px; padding: 14px 18px;
+  }
+  .local .name { font-size: 1rem; }
+  footer { margin-top: 36px; color: var(--muted); font-size: 0.82rem; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Kyle's Tools</h1>
-  <p class="sub">Everything hosted on the VPS.</p>
+  <header>
+    <h1>Kyle's Tools</h1>
+    <a href="/_gate/logout">Sign out</a>
+  </header>
 
-  <!-- To add a tool: copy one <li> block, change the link, name, text and
-       badge, then push to main. The VPS pulls within a minute. -->
-  <ul>
+  <!-- To add a tool: copy one <li> block into the right section, change the
+       link, name and text, then push to main. The VPS pulls within a minute.
+       A single-page tool goes in site/tools/ and links as tools/<file>.html. -->
+
+  <h2>VEIT &amp; BAT</h2>
+  <ul class="grid">
     <li>
-      <a class="tool" href="https://107-173-7-177.sslip.io/veit-converter.html">
-        <div class="row"><span class="name">VEIT Converter</span><span class="badge">site password</span></div>
-        <p class="desc">The VEIT converter, shared with the team.</p>
-        <div class="url">107-173-7-177.sslip.io/veit-converter.html</div>
+      <a class="tool" href="/">
+        <div class="name">VEIT Converter</div>
+        <p class="desc">Google Doc link to WordPress HTML for VEIT articles.</p>
+        <span class="note">Team login opens this too</span>
       </a>
     </li>
     <li>
-      <a class="tool" href="https://107-173-7-177.sslip.io/crossbuilder/">
-        <div class="row"><span class="name">VEIT Blog Crossbuilder</span><span class="badge admin">admin</span></div>
+      <a class="tool" href="/crossbuilder/">
+        <div class="name">VEIT Blog Crossbuilder</div>
         <p class="desc">Draft and crosslink BAT Academy articles; glossary links and backlog triage.</p>
-        <div class="url">107-173-7-177.sslip.io/crossbuilder/</div>
       </a>
     </li>
+    <li>
+      <a class="tool" href="tools/bat-seo-prompt-builder.html">
+        <div class="name">BAT SEO Article Prompt Builder</div>
+        <p class="desc">Builds the prompt for an SEO article on poultryscales.com.</p>
+      </a>
+    </li>
+    <li>
+      <a class="tool" href="tools/bat-content-prompts.html">
+        <div class="name">BAT Content Prompts</div>
+        <p class="desc">Prompts for the BAT content pipeline.</p>
+      </a>
+    </li>
+    <li>
+      <a class="tool" href="tools/diamondpro-wp-converter.html">
+        <div class="name">DiamondPro WP Article Converter</div>
+        <p class="desc">Google Doc link to clean WordPress HTML, with jump links and CTA buttons.</p>
+      </a>
+    </li>
+  </ul>
+
+  <h2>Personal</h2>
+  <ul class="grid">
     <li>
       <a class="tool" href="https://rss.107-173-7-177.sslip.io/">
-        <div class="row"><span class="name">RSS Filter</span><span class="badge admin">admin</span></div>
-        <p class="desc">Filtered RSS feeds.</p>
-        <div class="url">rss.107-173-7-177.sslip.io</div>
+        <div class="name">RSS Filter</div>
+        <p class="desc">Filters torrent RSS feeds before they reach the client.</p>
       </a>
+    </li>
+    <li>
+      <a class="tool" href="tools/unseen.html">
+        <div class="name">Unseen</div>
+        <p class="desc">TMDb browser that hides what you've seen. Import your lists file once per device.</p>
+      </a>
+    </li>
+    <li>
+      <a class="tool" href="tools/meal-planner.html">
+        <div class="name">Meal Prep Planner</div>
+        <p class="desc">Weekly meal plan and shopping list.</p>
+      </a>
+    </li>
+  </ul>
+
+  <h2>Only on the PC for now</h2>
+  <ul class="grid">
+    <li class="local">
+      <div class="name">Forum Term Finder</div>
+      <p class="desc">Desktop window; crawls a forum thread for terms into Excel.</p>
+    </li>
+    <li class="local">
+      <div class="name">Trello tools</div>
+      <p class="desc">Trello to Todoist sync, shared cards, reserve tracker (scripts).</p>
+    </li>
+    <li class="local">
+      <div class="name">VEIT LN Pipeline</div>
+      <p class="desc">Desktop shortcut.</p>
     </li>
   </ul>
 

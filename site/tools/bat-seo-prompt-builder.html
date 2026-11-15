@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAT Poultry Scales — SEO Article Prompt Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1f2436;
+    --border: #2a2f45;
+    --border-focus: #5b8cff;
+    --accent: #5b8cff;
+    --accent2: #f0a500;
+    --text: #e8eaf2;
+    --text-muted: #7a80a0;
+    --text-dim: #4a5070;
+    --success: #3ecf8e;
+    --error: #ff5c5c;
+    --tag-bg: #1e2540;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .brand-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+
+  .brand-text p {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Layout */
+  main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    min-height: calc(100vh - 73px);
+  }
+
+  .panel {
+    padding: 32px 40px;
+    overflow-y: auto;
+  }
+
+  .panel-left {
+    border-right: 1px solid var(--border);
+  }
+
+  .panel-right {
+    background: var(--surface);
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 28px;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .section-label label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .section-label label .required {
+    color: var(--accent2);
+  }
+
+  .char-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+
+  /* Inputs */
+  textarea, input[type="text"], select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    padding: 10px 14px;
+    resize: vertical;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    line-height: 1.6;
+  }
+
+  textarea:focus, input[type="text"]:focus, select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(91,140,255,0.12);
+  }
+
+  textarea::placeholder, input::placeholder {
+    color: var(--text-dim);
+  }
+
+  select option {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  /* Row layout */
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* Products — cycling buttons */
+  .products-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .product-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+    width: 100%;
+    text-align: left;
+    user-select: none;
+  }
+
+  .product-btn:hover { border-color: var(--text-dim); }
+
+  .product-btn.state-primary   { border-color: var(--accent); background: rgba(91,140,255,0.07); }
+  .product-btn.state-secondary { border-color: var(--accent2); background: rgba(240,165,0,0.07); }
+  .product-btn.state-omitted   { opacity: 0.42; }
+
+  .product-btn-info { flex: 1; }
+
+  .product-btn-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .product-btn-url {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .product-state-badge {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .state-primary   .product-state-badge { background: rgba(91,140,255,0.18); color: var(--accent); }
+  .state-secondary .product-state-badge { background: rgba(240,165,0,0.18); color: var(--accent2); }
+  .state-omitted   .product-state-badge { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+
+  /* Keyword tools */
+  .kw-toolbar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .btn-sm {
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    transition: all 0.15s;
+  }
+
+  .btn-sm:hover {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Preview panel */
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .preview-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+  }
+
+  .preview-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .prompt-preview {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.8;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+    word-break: break-word;
+  }
+
+  .prompt-preview .tag { color: var(--accent); }
+  .prompt-preview .content { color: var(--text); }
+  .prompt-preview .url { color: var(--accent2); }
+
+  /* Generate button */
+  .generate-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .btn-generate {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-generate:hover {
+    background: #3d72ef;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(91,140,255,0.3);
+  }
+
+  .btn-generate:active {
+    transform: translateY(0);
+  }
+
+  .btn-generate.copied {
+    background: var(--success);
+  }
+
+  .prompt-stats {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    gap: 16px;
+  }
+
+  .stat-item span {
+    color: var(--text-muted);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--success);
+    color: #0a1f14;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    pointer-events: none;
+    z-index: 999;
+    letter-spacing: 0.05em;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Content flags */
+  .flag-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    color: var(--text);
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+  .flag-row input { accent-color: var(--accent); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Missing fields highlight */
+  .field-missing {
+    border-color: var(--error) !important;
+  }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+    .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+    header { padding: 16px 20px; }
+    .panel { padding: 24px 20px; }
+    .generate-bar { padding: 14px 20px; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">⚖️</div>
+    <div class="brand-text">
+      <h1>BAT Poultry Scales</h1>
+      <p>SEO Article Prompt Builder</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-ghost" onclick="clearAll()">Clear All</button>
+    <button class="btn-ghost" onclick="saveSession()">Save Session</button>
+    <button class="btn-ghost" onclick="loadSession()">Load Saved</button>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT PANEL: Inputs -->
+  <div class="panel panel-left">
+
+    <div class="section-title">Article Setup</div>
+
+    <!-- Theme -->
+    <div class="section">
+      <div class="section-label">
+        <label>Theme / Topic <span class="required">*</span></label>
+        <span class="char-count" id="theme-count">0 chars</span>
+      </div>
+      <p class="hint">Paste in any language — the prompt instructs Claude to translate if needed.</p>
+      <textarea id="theme" rows="3" placeholder="e.g. Importance of accurate body weight monitoring in broiler production"></textarea>
+    </div>
+
+    <!-- Keywords -->
+    <div class="section">
+      <div class="section-label">
+        <label>Keywords <span class="required">*</span></label>
+        <span class="char-count" id="kw-count">0 keywords</span>
+      </div>
+      <p class="hint">Paste raw search queries as-is, one per line or comma-separated. The tool will normalize them.</p>
+      <div class="kw-toolbar">
+        <button class="btn-sm" onclick="normalizeKeywords()">⇌ Normalize</button>
+        <button class="btn-sm" onclick="clearField('keywords')">✕ Clear</button>
+      </div>
+      <textarea id="keywords" rows="6" placeholder="poultry scale price&#10;best chicken scale poultry farm&#10;automatic broiler weight monitoring&#10;weighing birds flock management"></textarea>
+    </div>
+
+    <!-- Constraints -->
+    <div class="section">
+      <div class="section-label">
+        <label>Constraints & Considerations</label>
+        <span class="char-count" id="constraints-count">0 chars</span>
+      </div>
+      <p class="hint">Any special instructions, things to avoid, regional focus, compliance notes, etc.</p>
+      <textarea id="constraints" rows="3" placeholder="e.g. Avoid mentioning competitors by name. Focus on EU market. Article is for integrators, not individual farmers."></textarea>
+    </div>
+
+    <!-- Main question -->
+    <div class="section">
+      <div class="section-label">
+        <label>Main question</label>
+        <span class="char-count" id="mainq-count">0 chars</span>
+      </div>
+      <p class="hint">The one question the opening answers. Leave blank and Claude proposes one, marked unconfirmed.</p>
+      <textarea id="mainq" rows="2" placeholder="e.g. How does breeder age affect first-week broiler mortality?"></textarea>
+    </div>
+
+    <!-- H2 questions -->
+    <div class="section">
+      <div class="section-label">
+        <label>H2 questions</label>
+        <span class="char-count" id="h2q-count">0 questions</span>
+      </div>
+      <p class="hint">One per line, grammatically complete, commercial production focus. Leave blank and Claude proposes them, marked unconfirmed.</p>
+      <textarea id="h2q" rows="4" placeholder="Why does breeder age change chick quality?&#10;How is first-week mortality measured on farm?"></textarea>
+    </div>
+
+    <!-- FAQ questions -->
+    <div class="section">
+      <div class="section-label">
+        <label>FAQ questions</label>
+        <span class="char-count" id="faqq-count">0 questions</span>
+      </div>
+      <p class="hint">One per line, 5 by default and up to 8. Grammatical, with the keyword or an adjacent term. No hobby or backyard questions. Leave blank and Claude proposes them, marked unconfirmed.</p>
+      <textarea id="faqq" rows="5" placeholder="What is a normal first-week mortality rate in broilers?"></textarea>
+    </div>
+
+    <!-- Content flags -->
+    <div class="section">
+      <div class="section-label">
+        <label>Content flags</label>
+      </div>
+      <p class="hint">Tick only where the topic genuinely compares options or describes a sequence of steps.</p>
+      <label class="flag-row"><input type="checkbox" id="flag-table"> Comparison table</label>
+      <label class="flag-row"><input type="checkbox" id="flag-steps"> Numbered procedure</label>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Products -->
+    <div class="section-title">Products to Promote</div>
+
+    <p class="hint" style="margin-bottom:12px;">Click to cycle: <span style="color:var(--accent)">Primary</span> &rarr; <span style="color:var(--accent2)">Secondary</span> &rarr; Omitted</p>
+
+    <div class="products-grid" id="products-grid"></div>
+
+  </div>
+
+  <!-- RIGHT PANEL: Preview -->
+  <div class="panel panel-right">
+    <div class="preview-header">
+      <h2>Prompt Preview</h2>
+      <div class="preview-status">
+        <div class="status-dot"></div>
+        Live preview
+      </div>
+    </div>
+    <div class="prompt-preview" id="preview">
+      Start filling in the fields on the left to see your prompt take shape...
+    </div>
+  </div>
+</main>
+
+<!-- Generate Bar -->
+<div class="generate-bar">
+  <div class="prompt-stats">
+    <div class="stat-item">Chars: <span id="stat-chars">—</span></div>
+    <div class="stat-item">Primary: <span id="stat-primary">—</span></div>
+    <div class="stat-item">Secondary: <span id="stat-secondary">—</span></div>
+    <div class="stat-item">Keywords: <span id="stat-kw">—</span></div>
+  </div>
+  <button class="btn-generate" onclick="generateAndCopy()" id="gen-btn">
+    <span id="gen-icon">⎘</span>
+    <span id="gen-label">Copy &amp; Open Claude</span>
+  </button>
+</div>
+
+<div class="toast" id="toast">✓ Prompt copied to clipboard</div>
+
+<script>
+// ─── All audiences hardcoded (all groups selected) ───────────────────────────
+const ALL_AUDIENCES = [
+  'poultry farm managers and flock supervisors',
+  'poultry integrators and production coordinators',
+  'first-time poultry scale buyers and small flock operators',
+  'veterinarians and poultry health professionals',
+  'poultry nutritionists and feed specialists'
+];
+
+// ─── Product registry with per-instance state ────────────────────────────────
+const PRODUCTS = {
+  bat2: {
+    name:    'BAT2 Connect automatic poultry scale',
+    label:   'BAT2 Connect — Automatic Poultry Scale',
+    url:     'https://poultryscales.com/bat2connect',
+    urlShort:'poultryscales.com/bat2connect',
+    default: 'primary'
+  },
+  bat1: {
+    name:    'BAT1 manual poultry scale',
+    label:   'BAT1 — Manual Poultry Scale',
+    url:     'https://poultryscales.com/bat1',
+    urlShort:'poultryscales.com/bat1',
+    default: 'primary'
+  },
+  sortingmachine: {
+    name:    'BAT1 Sorting Machine',
+    label:   'BAT1 Sorting Machine',
+    url:     'https://poultryscales.com/sortingmachine',
+    urlShort:'poultryscales.com/sortingmachine',
+    default: 'secondary'
+  },
+  batcloud: {
+    name:    'BAT Cloud data platform',
+    label:   'BAT Cloud — Data Platform',
+    url:     'https://poultryscales.com/batcloud',
+    urlShort:'poultryscales.com/batcloud',
+    default: 'secondary'
+  }
+};
+
+// Live state: 'primary' | 'secondary' | 'omitted'
+const productState = {};
+const CYCLE = ['primary', 'secondary', 'omitted'];
+
+function initProducts() {
+  const grid = document.getElementById('products-grid');
+  Object.keys(PRODUCTS).forEach(id => {
+    productState[id] = PRODUCTS[id].default;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'pbtn-' + id;
+    btn.className = 'product-btn state-' + productState[id];
+    btn.onclick = () => cycleProduct(id);
+    btn.innerHTML = `
+      <div class="product-btn-info">
+        <div class="product-btn-name">${PRODUCTS[id].label}</div>
+        <div class="product-btn-url">${PRODUCTS[id].urlShort}</div>
+      </div>
+      <span class="product-state-badge" id="pbadge-${id}">${capitalise(productState[id])}</span>`;
+    grid.appendChild(btn);
+  });
+}
+
+function cycleProduct(id) {
+  const current = productState[id];
+  const next = CYCLE[(CYCLE.indexOf(current) + 1) % CYCLE.length];
+  productState[id] = next;
+  const btn = document.getElementById('pbtn-' + id);
+  btn.className = 'product-btn state-' + next;
+  document.getElementById('pbadge-' + id).textContent = capitalise(next);
+  updatePreview();
+}
+
+function capitalise(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ─── Normalize keywords ──────────────────────────────────────────────────────
+function normalizeKeywords() {
+  const el = document.getElementById('keywords');
+  let raw = el.value;
+  raw = raw.replace(/\s*\([^)]*\)/g, '');
+  let kws = raw.split(/[\n,]+/).map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+  kws = [...new Set(kws)];
+  el.value = kws.join('\n');
+  updatePreview();
+}
+
+function clearField(id) {
+  document.getElementById(id).value = '';
+  updatePreview();
+}
+
+// ─── Prompt builder ──────────────────────────────────────────────────────────
+function splitLines(id) {
+  return document.getElementById(id).value.split('\n').map(k => k.trim()).filter(k => k);
+}
+
+function buildPrompt() {
+  const theme       = document.getElementById('theme').value.trim() || '[THEME NOT PROVIDED]';
+  const keywords    = document.getElementById('keywords').value.trim();
+  const constraints = document.getElementById('constraints').value.trim();
+  const mainq       = document.getElementById('mainq').value.trim();
+  const h2q         = splitLines('h2q');
+  const faqq        = splitLines('faqq');
+  const flags       = [];
+  if (document.getElementById('flag-table').checked) flags.push('comparison table');
+  if (document.getElementById('flag-steps').checked) flags.push('numbered procedure');
+  const h2Text   = h2q.length  ? h2q.map(q => `- ${q}`).join('\n')  : 'not provided';
+  const faqText  = faqq.length ? faqq.map(q => `- ${q}`).join('\n') : 'not provided';
+  const flagText = flags.length ? flags.join(', ') : 'none';
+
+  // Collect product states
+  const primaryIds   = Object.keys(PRODUCTS).filter(id => productState[id] === 'primary');
+  const secondaryIds = Object.keys(PRODUCTS).filter(id => productState[id] === 'secondary');
+
+  const kwList = keywords
+    ? keywords.split('\n').map(k => k.trim()).filter(k => k).map(k => `- ${k}`).join('\n')
+    : '[NO KEYWORDS PROVIDED]';
+
+  // Build products_and_hyperlinks block
+  let productsSection = '';
+  if (primaryIds.length || secondaryIds.length) {
+    let lines = '';
+    if (primaryIds.length) {
+      lines += 'Primary products:\n';
+      primaryIds.forEach(id => {
+        const p = PRODUCTS[id];
+        lines += `- ${p.name} → ${p.url}\n`;
+      });
+    }
+    if (secondaryIds.length) {
+      if (lines) lines += '\n';
+      lines += 'Secondary products:\n';
+      secondaryIds.forEach(id => {
+        const p = PRODUCTS[id];
+        lines += `- ${p.name} → ${p.url}\n`;
+      });
+    }
+    productsSection = `\n<products_and_hyperlinks>\n${lines.trim()}\n</products_and_hyperlinks>`;
+  } else {
+    productsSection = `\n<products_and_hyperlinks>\nno product anchors\n</products_and_hyperlinks>`;
+  }
+
+  const prompt = `<theme>
+${theme}
+</theme>
+
+<main_question>
+${mainq || 'not provided'}
+</main_question>
+
+<keywords>
+${kwList}
+</keywords>
+
+<h2_questions>
+${h2Text}
+</h2_questions>
+
+<faq_questions>
+${faqText}
+</faq_questions>
+
+<content_flags>
+${flagText}
+</content_flags>
+${productsSection}${constraints ? `\n\n<constraints_and_considerations>\n${constraints}\n</constraints_and_considerations>` : ''}`;
+
+  return prompt.trim();
+}
+
+// ─── Update preview ──────────────────────────────────────────────────────────
+function updatePreview() {
+  const prompt = buildPrompt();
+  const el = document.getElementById('preview');
+
+  const highlighted = prompt
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/(&lt;\/?[\w_]+&gt;)/g, '<span class="tag">$1</span>')
+    .replace(/(https?:\/\/[^\s]+)/g, '<span class="url">$1</span>');
+
+  el.innerHTML = highlighted;
+
+  document.getElementById('stat-chars').textContent = prompt.length.toLocaleString();
+  const kwCount = document.getElementById('keywords').value.split('\n').filter(k => k.trim()).length;
+  document.getElementById('stat-kw').textContent = kwCount;
+  document.getElementById('stat-primary').textContent =
+    Object.keys(PRODUCTS).filter(id => productState[id] === 'primary').length;
+  document.getElementById('stat-secondary').textContent =
+    Object.keys(PRODUCTS).filter(id => productState[id] === 'secondary').length;
+}
+
+// ─── Generate & copy ─────────────────────────────────────────────────────────
+const CLAUDE_PROJECT_URL = 'claude://claude.ai/project/0198dfba-630a-749a-a057-a41d02509a98';
+
+function generateAndCopy() {
+  const prompt = buildPrompt();
+
+  function onCopied() {
+    const btn   = document.getElementById('gen-btn');
+    const label = document.getElementById('gen-label');
+    const icon  = document.getElementById('gen-icon');
+    btn.classList.add('copied');
+    label.textContent = 'Copied! Opening Claude\u2026';
+    icon.textContent  = '\u2713';
+    showToast('\u2713 Prompt copied \u2014 opening BAT SEO project\u2026');
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = CLAUDE_PROJECT_URL;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }, 400);
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      label.textContent = 'Copy & Open Claude';
+      icon.textContent  = '\u2398';
+    }, 2400);
+  }
+
+  navigator.clipboard.writeText(prompt).then(onCopied).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = prompt;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    onCopied();
+  });
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Session save / load ─────────────────────────────────────────────────────
+function saveSession() {
+  const data = {
+    theme:      document.getElementById('theme').value,
+    keywords:   document.getElementById('keywords').value,
+    constraints:document.getElementById('constraints').value,
+    mainq:      document.getElementById('mainq').value,
+    h2q:        document.getElementById('h2q').value,
+    faqq:       document.getElementById('faqq').value,
+    flagTable:  document.getElementById('flag-table').checked,
+    flagSteps:  document.getElementById('flag-steps').checked,
+    products:   { ...productState }
+  };
+  localStorage.setItem('bat_prompt_session', JSON.stringify(data));
+  showToast('✓ Session saved');
+}
+
+function loadSession() {
+  const raw = localStorage.getItem('bat_prompt_session');
+  if (!raw) { showToast('No saved session found'); return; }
+  const data = JSON.parse(raw);
+  document.getElementById('theme').value       = data.theme       || '';
+  document.getElementById('keywords').value    = data.keywords    || '';
+  document.getElementById('constraints').value = data.constraints || '';
+  document.getElementById('mainq').value       = data.mainq       || '';
+  document.getElementById('h2q').value         = data.h2q         || '';
+  document.getElementById('faqq').value        = data.faqq        || '';
+  document.getElementById('flag-table').checked = !!data.flagTable;
+  document.getElementById('flag-steps').checked = !!data.flagSteps;
+  if (data.products) {
+    Object.keys(data.products).forEach(id => {
+      if (productState.hasOwnProperty(id)) {
+        const saved = data.products[id];
+        if (CYCLE.includes(saved)) {
+          productState[id] = saved;
+          const btn = document.getElementById('pbtn-' + id);
+          if (btn) {
+            btn.className = 'product-btn state-' + saved;
+            document.getElementById('pbadge-' + id).textContent = capitalise(saved);
+          }
+        }
+      }
+    });
+  }
+  updatePreview();
+  updateCharCounts();
+  showToast('✓ Session loaded');
+}
+
+function clearAll() {
+  if (!confirm('Clear all fields?')) return;
+  ['theme', 'keywords', 'constraints', 'mainq', 'h2q', 'faqq'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('flag-table').checked = false;
+  document.getElementById('flag-steps').checked = false;
+  // Reset products to defaults
+  Object.keys(PRODUCTS).forEach(id => {
+    productState[id] = PRODUCTS[id].default;
+    const btn = document.getElementById('pbtn-' + id);
+    if (btn) {
+      btn.className = 'product-btn state-' + PRODUCTS[id].default;
+      document.getElementById('pbadge-' + id).textContent = capitalise(PRODUCTS[id].default);
+    }
+  });
+  updatePreview();
+  updateCharCounts();
+}
+
+// ─── Char counters ───────────────────────────────────────────────────────────
+function updateCharCounts() {
+  const theme       = document.getElementById('theme').value;
+  const constraints = document.getElementById('constraints').value;
+  const kws         = document.getElementById('keywords').value.split('\n').filter(k => k.trim());
+  document.getElementById('theme-count').textContent       = theme.length + ' chars';
+  document.getElementById('constraints-count').textContent = constraints.length + ' chars';
+  document.getElementById('kw-count').textContent          = kws.length + ' keyword' + (kws.length !== 1 ? 's' : '');
+  const nq = id => document.getElementById(id).value.split('\n').filter(k => k.trim()).length;
+  document.getElementById('mainq-count').textContent = document.getElementById('mainq').value.length + ' chars';
+  document.getElementById('h2q-count').textContent   = nq('h2q') + ' question' + (nq('h2q') !== 1 ? 's' : '');
+  document.getElementById('faqq-count').textContent  = nq('faqq') + ' question' + (nq('faqq') !== 1 ? 's' : '');
+}
+
+// ─── Event listeners ─────────────────────────────────────────────────────────
+document.querySelectorAll('textarea, input[type="text"], input[type="checkbox"], select').forEach(el => {
+  el.addEventListener('input',  () => { updatePreview(); updateCharCounts(); });
+  el.addEventListener('change', () => { updatePreview(); updateCharCounts(); });
+});
+
+// Init
+initProducts();
+updatePreview();
+updateCharCounts();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WP Article Converter</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface-2: #22222e;
+    --border: #2e2e3e;
+    --accent: #7c6af7;
+    --accent-dim: #3d3680;
+    --text: #e8e8f0;
+    --text-muted: #7a7a96;
+    --success: #4caf82;
+    --error: #e05c6a;
+    --radius: 10px;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 20px;
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="text"]::placeholder {
+    color: var(--text-muted);
+  }
+
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 22px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  button:hover { opacity: 0.88; }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+    min-height: 22px;
+    margin-top: 14px;
+  }
+
+  .status.loading { color: var(--accent); }
+  .status.error { color: var(--error); }
+  .status.success { color: var(--success); }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--accent-dim);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .transforms {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .transform-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .transform-icon {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    background: var(--accent-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .transform-info { flex: 1; }
+
+  .transform-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .transform-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .transform-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .output-area {
+    position: relative;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 320px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+
+  .stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .hidden { display: none; }
+
+  .copy-flash {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--success);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+
+  .copy-flash.show { opacity: 1; }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .output-header .card-label { margin-bottom: 0; }
+  .output-actions-top {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* Table confirmation modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px;
+  }
+  .modal-overlay:not(.hidden) {
+    display: flex;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 100%; max-width: 620px;
+    max-height: 80vh; overflow-y: auto;
+    padding: 28px;
+  }
+  .modal-title {
+    font-size: 16px; font-weight: 700;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .modal-subtitle {
+    font-size: 13px; color: var(--text-muted); margin-bottom: 24px;
+  }
+  .table-confirm-item {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-confirm-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .table-confirm-label {
+    font-size: 13px; font-weight: 600;
+    color: var(--text); margin-bottom: 10px;
+  }
+  .table-confirm-meta {
+    font-weight: 400; color: var(--text-muted); margin-left: 8px;
+  }
+  .table-confirm-options {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .table-option {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px; color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .table-option.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .table-option input { accent-color: var(--accent); }
+  .modal-actions {
+    display: flex; justify-content: flex-end;
+    gap: 10px; margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Tooling</div>
+  <h1>WP Article <span>Converter</span></h1>
+  <p class="subtitle">Paste a Google Docs share link to convert your article into clean WordPress-ready HTML — with jump links and CTA buttons handled automatically.</p>
+</header>
+
+<div class="card">
+  <div class="card-label">Google Doc URL</div>
+  <div class="input-row">
+    <input type="text" id="docUrl" placeholder="https://docs.google.com/document/d/…/edit?usp=sharing" />
+    <button id="convertBtn" onclick="convert()">Convert</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="card hidden" id="outputCard">
+  <div class="output-header">
+    <div class="card-label">WordPress HTML Output</div>
+    <div class="output-actions-top">
+      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+      <button onclick="copyOutput()">Copy to Clipboard</button>
+    </div>
+  </div>
+  <div class="output-area">
+    <textarea id="output" readonly></textarea>
+    <div class="copy-flash" id="copyFlash">Copied!</div>
+  </div>
+  <div class="stats" id="stats"></div>
+</div>
+
+<script>
+function slugify(text) {
+  return text
+    .toLowerCase()
+    .replace(/[#]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+function setStatus(msg, type = '') {
+  const el = document.getElementById('status');
+  el.className = 'status ' + type;
+  el.innerHTML = type === 'loading'
+    ? `<div class="spinner"></div>${msg}`
+    : msg;
+}
+
+function extractDocId(url) {
+  const m = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+async function fetchDocHTML(docId) {
+  const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=html`;
+  let res = await fetch(exportUrl);
+
+  // Fallback to Drive export endpoint (for .docx files converted to Google Docs)
+  if (!res.ok) {
+    const driveUrl = `https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&exportFormat=html`;
+    res = await fetch(driveUrl);
+  }
+
+  if (!res.ok) throw new Error(`Could not fetch document (HTTP ${res.status}). Make sure sharing is set to "Anyone with the link can view".`);
+  return await res.text();
+}
+
+function parseAndTransform(rawHtml) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(rawHtml, 'text/html');
+
+  // Extract bold/italic/heading class names from Google Docs stylesheet before removing it
+  const boldClasses = new Set();
+  const italicClasses = new Set();
+  const headingClasses = {}; // maps class name -> heading level (1-6)
+
+  // Parse stylesheet to extract per-class font-size and font-weight
+  const classStyles = {}; // cls -> { size, bold, italic }
+
+  doc.querySelectorAll('style').forEach(styleEl => {
+    const css = styleEl.textContent;
+    // Split into individual rules by matching .classname { ... }
+    const ruleRegex = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
+    let match;
+    while ((match = ruleRegex.exec(css)) !== null) {
+      const cls = match[1];
+      const body = match[2];
+      if (!classStyles[cls]) classStyles[cls] = {};
+      const sizeMatch = body.match(/font-size\s*:\s*([\d.]+)pt/i);
+      if (sizeMatch) classStyles[cls].size = parseFloat(sizeMatch[1]);
+      if (/font-weight\s*:\s*(bold|700|800|900)/i.test(body)) classStyles[cls].bold = true;
+      if (/font-style\s*:\s*italic/i.test(body)) classStyles[cls].italic = true;
+    }
+  });
+
+  // Build bold/italic/heading sets from parsed styles
+  // Collect all font sizes used to determine relative heading levels
+  const allSizes = Object.values(classStyles)
+    .map(s => s.size)
+    .filter(s => s !== undefined);
+  const uniqueSizes = [...new Set(allSizes)].sort((a, b) => b - a);
+  const bodySize = uniqueSizes[uniqueSizes.length - 1] || 11;
+
+  for (const [cls, style] of Object.entries(classStyles)) {
+    if (style.bold) boldClasses.add(cls);
+    if (style.italic) italicClasses.add(cls);
+    if (style.size && style.size > bodySize * 1.15) {
+      // Assign heading level based on relative size
+      const rank = uniqueSizes.indexOf(style.size);
+      if (rank === 0) headingClasses[cls] = 1;
+      else if (rank === 1) headingClasses[cls] = 2;
+      else if (rank === 2) headingClasses[cls] = 3;
+      else if (rank >= 3) headingClasses[cls] = 4;
+    }
+  }
+
+  // PRE-PROCESSING PASS: detect inline heading labels (H1, H2, H3) added by editors
+  // Handles patterns like: "H1 Title text", "H2. Title text", "H3: Title text"
+  // at the start of any paragraph or heading element, with or without heading formatting.
+  // Strips the label and promotes/corrects the element to the appropriate heading level.
+  const headingLabelRegex = /^(H[123])\s*[.:\-–—]?\s+/i;
+  doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(el => {
+    const rawText = el.textContent;
+    const match = rawText.match(headingLabelRegex);
+    if (!match) return;
+
+    const level = parseInt(match[1].charAt(1)); // 1, 2, or 3
+
+    // Strip the label from the first text node (or first span's first text node)
+    // We walk the first text node we find and remove the prefix from it
+    function stripLabelFromNode(node, prefix) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const stripped = node.textContent.replace(headingLabelRegex, '');
+        node.textContent = stripped;
+        return true;
+      }
+      for (const child of node.childNodes) {
+        if (stripLabelFromNode(child, prefix)) return true;
+      }
+      return false;
+    }
+    stripLabelFromNode(el, match[0]);
+
+    // Now ensure the element is the correct heading level
+    const currentTag = el.tagName.toLowerCase();
+    const targetTag = 'h' + level;
+    if (currentTag !== targetTag) {
+      const newEl = doc.createElement(targetTag);
+      // Copy attributes
+      Array.from(el.attributes).forEach(attr => newEl.setAttribute(attr.name, attr.value));
+      while (el.firstChild) newEl.appendChild(el.firstChild);
+      el.parentNode.replaceChild(newEl, el);
+    }
+  });
+
+  // Convert heading-classed <p> tags to proper heading elements
+  // Also treat all-bold <p> tags as h3 if no heading class matched
+  doc.querySelectorAll('p').forEach(el => {
+    const cls = el.getAttribute('class') || '';
+    const classNames = cls.split(/\s+/);
+    let matched = false;
+    for (const c of classNames) {
+      if (headingClasses[c] !== undefined) {
+        const level = headingClasses[c];
+        const heading = doc.createElement('h' + level);
+        while (el.firstChild) heading.appendChild(el.firstChild);
+        el.parentNode.replaceChild(heading, el);
+        matched = true;
+        break;
+      }
+    }
+    // Fallback: if every span child is bold and there's no heading class, treat as h3
+    if (!matched) {
+      const spans = Array.from(el.querySelectorAll('span'));
+      const textContent = el.textContent.trim();
+      if (textContent && spans.length > 0) {
+        const allBold = spans.every(s => {
+          const sc = s.getAttribute('class') || '';
+          return sc.split(/\s+/).some(c => boldClasses.has(c));
+        });
+        // Only promote to h3 if the paragraph is short (likely a heading, not bold body text)
+        // Never promote a paragraph that contains a link — it's a CTA button, not a heading
+        const hasLink = el.querySelector('a') !== null;
+        if (allBold && textContent.length < 120 && !hasLink) {
+          const heading = doc.createElement('h3');
+          while (el.firstChild) heading.appendChild(el.firstChild);
+          el.parentNode.replaceChild(heading, el);
+        }
+      }
+    }
+  });
+
+  // Remove all style/script/meta tags
+  doc.querySelectorAll('style, script, meta, link').forEach(el => el.remove());
+
+  // Preserve bold/italic from spans before unwrapping (check both inline styles and Google Docs classes)
+  doc.querySelectorAll('span').forEach(el => {
+    const style = el.getAttribute('style') || '';
+    const cls = el.getAttribute('class') || '';
+    const classNames = cls.split(/\s+/);
+    const isBold = /font-weight\s*:\s*(bold|700|800|900)/i.test(style) || classNames.some(c => boldClasses.has(c));
+    const isItalic = /font-style\s*:\s*italic/i.test(style) || classNames.some(c => italicClasses.has(c));
+    if (isBold && isItalic) {
+      const strong = doc.createElement('strong');
+      const em = doc.createElement('em');
+      while (el.firstChild) em.appendChild(el.firstChild);
+      strong.appendChild(em);
+      el.parentNode.replaceChild(strong, el);
+    } else if (isBold) {
+      const strong = doc.createElement('strong');
+      while (el.firstChild) strong.appendChild(el.firstChild);
+      el.parentNode.replaceChild(strong, el);
+    } else if (isItalic) {
+      const em = doc.createElement('em');
+      while (el.firstChild) em.appendChild(el.firstChild);
+      el.parentNode.replaceChild(em, el);
+    } else {
+      const parent = el.parentNode;
+      while (el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+    }
+  });
+
+  // Unwrap font tags
+  doc.querySelectorAll('font').forEach(el => {
+    const parent = el.parentNode;
+    while (el.firstChild) parent.insertBefore(el.firstChild, el);
+    parent.removeChild(el);
+  });
+
+  // ── Bookmark map ───────────────────────────────────────────────────────────
+  // Google Docs internal links point at bookmark anchors (#id.xxxxx / #bookmark=id.xxxxx).
+  // Those IDs mean nothing in WordPress, so map each one to the heading it marks and
+  // rewrite the links later. MUST run before the id attributes are stripped below.
+  const bookmarkMap = {};
+  {
+    const HEADING_TAGS = new Set(['H1','H2','H3','H4','H5','H6']);
+    const allEls = Array.from(doc.querySelectorAll('*'));
+
+    const headingFor = (el) => {
+      // The anchor usually sits inside the heading it marks…
+      let cur = el;
+      while (cur && cur !== doc.body) {
+        if (HEADING_TAGS.has(cur.tagName)) return cur;
+        cur = cur.parentNode;
+      }
+      // …otherwise it precedes it, so take the next heading in document order.
+      const start = allEls.indexOf(el);
+      for (let i = start + 1; i < allEls.length; i++) {
+        if (HEADING_TAGS.has(allEls[i].tagName)) return allEls[i];
+      }
+      return null;
+    };
+
+    allEls.forEach(el => {
+      const keys = [el.getAttribute('id'), el.getAttribute('name')].filter(Boolean);
+      if (!keys.length) return;
+      const heading = headingFor(el);
+      if (!heading) return;
+      const text = (heading.textContent || '').trim();
+      if (!text) return;
+      keys.forEach(k => { if (!bookmarkMap[k]) bookmarkMap[k] = 'h-' + slugify(text); });
+    });
+  }
+
+  // Remove all inline styles and class attributes
+  doc.querySelectorAll('*').forEach(el => {
+    el.removeAttribute('style');
+    el.removeAttribute('class');
+    el.removeAttribute('id');
+    el.removeAttribute('dir');
+    el.removeAttribute('lang');
+  });
+
+  // Normalize headings: Google Docs uses h1-h6 but also p with custom styles
+  // Convert all heading-like elements
+  const body = doc.body;
+
+  // Get clean text for all elements
+  function getText(el) {
+    return (el.textContent || '').trim();
+  }
+
+  // Collect all block elements in order
+  const blocks = Array.from(body.querySelectorAll('h1,h2,h3,h4,h5,h6,p,ul,ol,table'));
+
+  let jumpListFound = false;
+  let jumpListUl = null;
+  let jumpListLeadIn = null;
+  let stats = { jumpLinks: 0, ctaButtons: 0, headings: 0, unresolvedAnchors: 0, metaStripped: 0 };
+
+  const isHeadingEl = el => /^H[1-6]$/.test(el.tagName || '');
+
+  // Find the jump list: the block(s) directly under a "Here's what we'll cover" lead-in.
+  // The search is BOUNDED — it stops at the next heading. It must never reach further
+  // down the document and adopt an unrelated list, which would both produce a wrong TOC
+  // and strip that list out of the section it belongs to.
+  blocks.forEach((el, i) => {
+    const text = getText(el);
+    if (/here.s what we.ll cover/i.test(text) && !jumpListFound) {
+      const scope = [];
+      let sibling = el.nextElementSibling;
+      while (sibling && !isHeadingEl(sibling)) {
+        scope.push(sibling);
+        sibling = sibling.nextElementSibling;
+      }
+
+      const adopt = (ul) => { jumpListFound = true; jumpListLeadIn = el; jumpListUl = ul; };
+
+      // 1) A real ul/ol, but only within this section
+      const ulInScope = scope.find(n => n.tagName === 'UL' || n.tagName === 'OL');
+      if (ulInScope) { adopt(ulInScope); return; }
+
+      // 2) Consecutive dash-prefixed paragraphs (e.g. "- Item one")
+      const dashItems = [];
+      for (const n of scope) {
+        const t = getText(n).trim();
+        if (!t) continue;
+        if (/^[-–—]\s+/.test(t)) dashItems.push({ el: n, text: t.replace(/^[-–—]\s+/, '') });
+        else break;
+      }
+      if (dashItems.length > 0) {
+        const ul = doc.createElement('ul');
+        dashItems.forEach(item => {
+          const li = doc.createElement('li');
+          li.textContent = item.text;
+          ul.appendChild(li);
+          item.el._isDashListItem = true;
+        });
+        adopt(ul);
+        return;
+      }
+
+      // 3) Consecutive standalone-link paragraphs — how Google Docs exports a
+      //    bookmark-linked TOC. Keep each href so it can resolve via bookmarkMap.
+      const linkItems = [];
+      for (const n of scope) {
+        const t = getText(n).trim();
+        if (!t) continue;
+        const anchors = n.querySelectorAll ? Array.from(n.querySelectorAll('a')) : [];
+        if (anchors.length === 1 && getText(anchors[0]).trim() === t) {
+          linkItems.push({ el: n, text: t, href: anchors[0].getAttribute('href') || '' });
+        } else break;
+      }
+      if (linkItems.length > 0) {
+        const ul = doc.createElement('ul');
+        linkItems.forEach(item => {
+          const li = doc.createElement('li');
+          li.textContent = item.text;
+          if (item.href) li.setAttribute('data-bookmark-href', item.href);
+          ul.appendChild(li);
+          item.el._isDashListItem = true;
+        });
+        adopt(ul);
+      }
+    }
+  });
+
+  // Remove dash list item paragraphs from the DOM so they don't appear in output
+  doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(el => {
+    if (el._isDashListItem) el.parentNode && el.parentNode.removeChild(el);
+  });
+
+  // Strip Google redirect wrapper from URLs
+  function cleanUrl(href) {
+    try {
+      const parsed = new URL(href);
+      if (parsed.hostname === 'www.google.com' && parsed.pathname === '/url') {
+        const q = parsed.searchParams.get('q');
+        if (q) return q;
+      }
+    } catch (e) {}
+    return href;
+  }
+
+  // Rewrite a Google Docs bookmark link (#id.xxxxx or #bookmark=id.xxxxx) to the
+  // WordPress heading anchor it points at. Unresolvable ones are counted and left
+  // visibly flagged rather than shipped as silently dead links.
+  const unresolvedSeen = new Set();
+  function resolveAnchorHref(href) {
+    if (!href || href.charAt(0) !== '#') return href;
+    const raw = href.slice(1).replace(/^bookmark=/, '');
+    if (bookmarkMap[raw]) return '#' + bookmarkMap[raw];
+    if (/^(id\.|bookmark)/i.test(raw)) {
+      // A link can be resolved more than once per node, so count unique targets.
+      unresolvedSeen.add(raw);
+      stats.unresolvedAnchors = unresolvedSeen.size;
+      return '#UNRESOLVED-' + raw;
+    }
+    return href; // already a real anchor like #h-something
+  }
+
+  // Build output HTML string
+  let output = '';
+  const pendingTables = [];
+
+  function processNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+    const tag = node.tagName ? node.tagName.toLowerCase() : '';
+    const children = Array.from(node.childNodes).map(processNode).join('');
+
+    if (tag === 'a') {
+      const rawHref = node.getAttribute('href') || '';
+      const href = resolveAnchorHref(cleanUrl(rawHref));
+      const linkText = getText(node);
+      // An in-page anchor is navigation, never a CTA button.
+      const isAnchorLink = href.charAt(0) === '#';
+
+      // CTA button: only via the explicit flag. The paragraph handler below already
+      // detects standalone CTAs; the old "Shop" prefix rule fired here too, which
+      // double-counted them and would blow an inline "Shop the collection" link
+      // mid-sentence into a full-width button block.
+      if (!isAnchorLink && node._asButton) {
+        stats.ctaButtons++;
+        return `\n<!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->\n<div class="wp-block-buttons"><!-- wp:button {"className":"button"} -->\n<div class="wp-block-button button"><a class="wp-block-button__link wp-element-button" href="${href}">${linkText}</a></div>\n<!-- /wp:button --></div>\n<!-- /wp:buttons -->\n`;
+      }
+
+      return `<a href="${href}">${children}</a>`;
+    }
+
+    if (['h1','h2','h3','h4','h5','h6'].includes(tag)) {
+      const text = getText(node);
+      if (text) stats.headings++;
+      const level = parseInt(tag[1]);
+      if (tag === 'h2') {
+        const id = 'h-' + slugify(text);
+        return `\n<!-- wp:heading {"level":${level}} -->\n<${tag} class="wp-block-heading" id="${id}">${children}</${tag}>\n<!-- /wp:heading -->\n`;
+      }
+      return `\n<!-- wp:heading {"level":${level}} -->\n<${tag} class="wp-block-heading">${children}</${tag}>\n<!-- /wp:heading -->\n`;
+    }
+
+    if (tag === 'p') {
+      const text = getText(node);
+      if (!text) return ''; // skip empty paragraphs
+      // Check if entire paragraph is a single standalone link (convert to button)
+      // Use querySelectorAll to find the link even if it's wrapped in a span
+      const links = node.querySelectorAll('a');
+      if (links.length === 1) {
+        const linkText = getText(links[0]).replace(/\u00a0/g, ' ').trim();
+        const paraText = text.replace(/\u00a0/g, ' ').trim();
+        // Convert if the whole paragraph text matches the link text (standalone link)
+        const rawHref = links[0].getAttribute('href') || '';
+        const href = resolveAnchorHref(cleanUrl(rawHref));
+        // In-page anchors stay inline links — a jump link is not a CTA.
+        if (linkText && paraText === linkText && href.charAt(0) !== '#') {
+          stats.ctaButtons++;
+          return `\n<!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->\n<div class="wp-block-buttons"><!-- wp:button {"className":"button"} -->\n<div class="wp-block-button button"><a class="wp-block-button__link wp-element-button" href="${href}">${linkText}</a></div>\n<!-- /wp:button --></div>\n<!-- /wp:buttons -->\n`;
+        }
+      }
+      return `\n<!-- wp:paragraph -->\n<p>${children}</p>\n<!-- /wp:paragraph -->\n`;
+    }
+
+    if (tag === 'ul' || tag === 'ol') {
+      // Check if this is the jump list
+      if (node === jumpListUl) {
+        const items = Array.from(node.querySelectorAll('li'));
+        const listItems = items.map(li => {
+          const text = getText(li);
+          // Prefer the bookmark the editor actually linked; fall back to the slugified
+          // label, which matches the id emitted on H2 headings.
+          const bm = li.getAttribute && li.getAttribute('data-bookmark-href');
+          let target = 'h-' + slugify(text);
+          if (bm) {
+            const resolved = resolveAnchorHref(bm);
+            if (resolved.charAt(0) === '#' && !/^#UNRESOLVED-/.test(resolved)) {
+              target = resolved.slice(1);
+              stats.unresolvedAnchors = Math.max(0, stats.unresolvedAnchors);
+            }
+          }
+          stats.jumpLinks++;
+          return `<!-- wp:list-item --><li><a href="#${target}">${text}</a></li><!-- /wp:list-item -->`;
+        }).join('\n');
+        return `\n<!-- wp:list -->\n<ul class="wp-block-list">\n${listItems}\n</ul>\n<!-- /wp:list -->\n`;
+      }
+      const listTag = tag;
+      const wpTag = listTag === 'ol' ? '{"ordered":true}' : '';
+      const items = Array.from(node.children).map(li => {
+        if (li.tagName && li.tagName.toLowerCase() === 'li') {
+          const liContent = Array.from(li.childNodes).map(processNode).join('');
+          return `<!-- wp:list-item --><li>${liContent}</li><!-- /wp:list-item -->`;
+        }
+        return processNode(li);
+      }).join('\n');
+      return `\n<!-- wp:list ${wpTag} -->\n<${listTag} class="wp-block-list">\n${items}\n</${listTag}>\n<!-- /wp:list -->\n`;
+    }
+
+    if (tag === 'li') {
+      return `<!-- wp:list-item --><li>${children}</li><!-- /wp:list-item -->\n`;
+    }
+
+    if (tag === 'strong' || tag === 'b') return `<strong>${children}</strong>`;
+    if (tag === 'em' || tag === 'i') return `<em>${children}</em>`;
+    if (tag === 'br') return `<br>`;
+
+    if (tag === 'table') {
+      // Tables are handled separately via the confirmation UI
+      // Store raw table node for later processing
+      pendingTables.push(node);
+      return `<!--TABLE_PLACEHOLDER_${pendingTables.length - 1}-->`;
+    }
+    if (tag === 'tbody') return children;
+    if (tag === 'tr') return children;
+    if (tag === 'td') return children;
+    if (tag === 'th') return children;
+
+    if (tag === 'img') {
+      const src = node.getAttribute('src') || '';
+      const alt = node.getAttribute('alt') || '';
+      return `\n<!-- wp:image -->\n<figure class="wp-block-image"><img src="${src}" alt="${alt}"></figure>\n<!-- /wp:image -->\n`;
+    }
+
+    if (tag === 'hr') return `\n<!-- wp:separator -->\n<hr class="wp-block-separator"/>\n<!-- /wp:separator -->\n`;
+
+    // For divs and other wrappers, just return children
+    if (['div','body','html','section','article','main'].includes(tag)) {
+      return children;
+    }
+
+    return children;
+  }
+
+  // Remove the lead-in paragraph if found (it'll be part of the jump list block)
+  let leadInText = '';
+  if (jumpListLeadIn) {
+    leadInText = getText(jumpListLeadIn);
+  }
+
+  // Process all direct children of body, starting from the first heading
+  const directChildren = Array.from(body.childNodes);
+  let result = '';
+  let h1Found = false;
+  let articleTitle = '';
+  const headingTags = new Set(['h1','h2','h3','h4','h5','h6']);
+
+  // The metadata block editors put at the top of every doc belongs in the WP fields,
+  // not the post body. Drop these lines wherever they appear before the body starts —
+  // they are often styled as headings, which used to make them survive the skip below.
+  const METADATA_RE = /^\s*(url(\s+suggestion)?|title\s*tag|meta\s*(title|description)|slug|updated|last\s*updated|keyword|primary\s*keyword|word\s*count|author)\s*:/i;
+
+  for (const node of directChildren) {
+    const nodeName = node.nodeName ? node.nodeName.toLowerCase() : '';
+    const nodeText = node.nodeType === Node.ELEMENT_NODE ? getText(node) : '';
+
+    if (!h1Found && nodeText && METADATA_RE.test(nodeText)) {
+      stats.metaStripped++;
+      continue;
+    }
+
+    // The H1 is the post title — WordPress renders it from the title field, so emitting
+    // it here would duplicate it on the page. Always capture, never output.
+    if (nodeName === 'h1') {
+      if (!articleTitle) articleTitle = getText(node);
+      h1Found = true;
+      continue;
+    }
+
+    // Skip everything before the first heading
+    if (!h1Found) {
+      if (nodeName && headingTags.has(nodeName)) {
+        h1Found = true;
+      } else {
+        continue;
+      }
+    }
+
+    // Skip the lead-in paragraph for the jump list, output it with the list
+    if (node === jumpListLeadIn) {
+      // Ensure lead-in ends with a colon and is formatted as H3
+      let leadInFormatted = leadInText.trim();
+      if (!leadInFormatted.endsWith(':')) leadInFormatted += ':';
+      result += `\n<!-- wp:heading {"level":3} -->\n<h3 class="wp-block-heading">${leadInFormatted}</h3>\n<!-- /wp:heading -->\n`;
+      result += processNode(jumpListUl);
+      continue;
+    }
+    if (node === jumpListUl) continue; // already handled above
+    result += processNode(node);
+  }
+
+  // Insert empty paragraph block between consecutive button blocks
+  result = result.replace(
+    /<!-- \/wp:buttons -->(\s*)<!-- wp:buttons/g,
+    '<!-- /wp:buttons -->\n\n<!-- wp:paragraph -->\n<p></p>\n<!-- /wp:paragraph -->\n\n<!-- wp:buttons'
+  );
+
+  // Clean up excessive blank lines
+  result = result.replace(/\n{3,}/g, '\n\n').trim();
+
+  return { html: result, stats, pendingTables, articleTitle };
+}
+
+// ── Table utilities ──────────────────────────────────────────────────────────
+
+function getTableRows(tableNode) {
+  return Array.from(tableNode.querySelectorAll('tr'));
+}
+
+function getCells(row) {
+  return Array.from(row.querySelectorAll('td, th'));
+}
+
+function cellText(cell) {
+  return (cell.textContent || '').trim();
+}
+
+function isBoldCell(cell) {
+  // Check if cell content is bold (strong tag or bold span)
+  return cell.querySelector('strong, b') !== null ||
+    cell.querySelector('h1,h2,h3,h4,h5,h6') !== null;
+}
+
+function detectTableFormat(tableNode) {
+  const rows = getTableRows(tableNode);
+  if (!rows.length) return 'header-row';
+
+  const firstRow = rows[0];
+  const firstRowCells = getCells(firstRow);
+  const colCount = firstRowCells.reduce((sum, c) => sum + (parseInt(c.getAttribute('colspan')) || 1), 0);
+
+  // Check if first row is a title bar (single cell spanning all columns)
+  const firstRowIsTitle = firstRowCells.length === 1 &&
+    (parseInt(firstRowCells[0].getAttribute('colspan')) || 1) >= colCount - 1;
+
+  if (firstRowIsTitle && rows.length > 1) {
+    const secondRow = rows[1];
+    const secondCells = getCells(secondRow);
+    // Check if second row first cell is empty (header row + header column)
+    const secondRowFirstEmpty = cellText(secondCells[0]) === '' || secondCells[0].innerHTML.trim() === '&nbsp;';
+    if (secondRowFirstEmpty && secondCells.length > 1) {
+      return 'title-header-row-col';
+    }
+    return 'title-header-row';
+  }
+
+  // Check if first row first cell is empty (header row + header column)
+  const firstCellEmpty = firstRowCells.length > 0 &&
+    (cellText(firstRowCells[0]) === '' || firstRowCells[0].innerHTML.trim() === '&nbsp;');
+  if (firstCellEmpty && firstRowCells.length > 1) {
+    return 'header-row-col';
+  }
+
+  return 'header-row';
+}
+
+function buildTableHTML(tableNode, format, boldFirstCol = false) {
+  const BORDER = 'border: 1px solid #e0e0e0; font-size: 14px; padding: 6px 10px;';
+  const rows = getTableRows(tableNode);
+  if (!rows.length) return '';
+
+  const parts = [];
+  parts.push('<!-- wp:html -->');
+  parts.push('<table style="width:100%; border-collapse: collapse;"><tbody>');
+
+  const formatCell = (cell, asHeader) => {
+    const tag = asHeader ? 'th' : 'td';
+    // Strip WP block comments, heading tags, paragraph tags, keeping only inline content
+    let content = cell.innerHTML
+      .replace(/<!--[^>]*-->/g, '')
+      .replace(/<\/?h[1-6][^>]*>/gi, '')
+      .replace(/<\/?p[^>]*>/gi, '')
+      .replace(/<\/?strong>/gi, '')
+      .replace(/<\/?b>/gi, '')
+      .replace(/<\/?figure[^>]*>/gi, '')
+      .replace(/\n/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    const colspan = cell.getAttribute('colspan') ? ' colspan="' + cell.getAttribute('colspan') + '"' : '';
+    return '<' + tag + ' style="' + BORDER + '"' + colspan + '>' + content + '</' + tag + '>';
+  };
+
+  if (format === 'header-row') {
+    rows.forEach((row, i) => {
+      const cells = getCells(row);
+      parts.push('<tr>' + cells.map((c, j) => {
+        const isHeader = i === 0;
+        const isBoldCol = boldFirstCol && j === 0 && i > 0;
+        if (isBoldCol) {
+          const BORDER_STYLE = 'border: 1px solid #e0e0e0; font-size: 14px; padding: 6px 10px;';
+          const content = c.innerHTML
+            .replace(/<!--[^>]*-->/g, '')
+            .replace(/<\/?h[1-6][^>]*>/gi, '')
+            .replace(/<\/?p[^>]*>/gi, '')
+            .replace(/<\/?strong>/gi, '')
+            .replace(/<\/?b>/gi, '')
+            .replace(/<\/?figure[^>]*>/gi, '')
+            .replace(/\n/g, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+          return '<td style="' + BORDER_STYLE + '"><strong>' + content + '</strong></td>';
+        }
+        return formatCell(c, isHeader);
+      }).join('') + '</tr>');
+    });
+  } else if (format === 'header-row-col') {
+    rows.forEach((row, i) => {
+      const cells = getCells(row);
+      parts.push('<tr>' + cells.map((c, j) => formatCell(c, i === 0 || j === 0)).join('') + '</tr>');
+    });
+  } else if (format === 'title-header-row') {
+    rows.forEach((row, i) => {
+      const cells = getCells(row);
+      parts.push('<tr>' + cells.map(c => formatCell(c, i <= 1)).join('') + '</tr>');
+    });
+  } else if (format === 'title-header-row-col') {
+    rows.forEach((row, i) => {
+      const cells = getCells(row);
+      parts.push('<tr>' + cells.map((c, j) => formatCell(c, i <= 1 || j === 0)).join('') + '</tr>');
+    });
+  }
+
+  parts.push('</tbody></table>');
+  parts.push('<!-- /wp:html -->');
+  return parts.join('\n');
+}
+
+// ── Table confirmation UI ────────────────────────────────────────────────────
+
+let _pendingTables = [];
+let _pendingHTML = '';
+let _pendingStats = {};
+let _tableDecisions = [];
+
+function showTableConfirmation(tables, html, stats) {
+  _pendingTables = tables;
+  _pendingHTML = html;
+  _pendingStats = stats;
+  _tableDecisions = tables.map(t => detectTableFormat(t));
+
+  const modal = document.getElementById('tableModal');
+  const body = document.getElementById('tableModalBody');
+  body.innerHTML = '';
+
+  tables.forEach((table, i) => {
+    const rows = getTableRows(table);
+    const detected = _tableDecisions[i];
+    const colCount = getCells(rows[0] || {querySelectorAll: ()=>[]}).length || 0;
+
+    const div = document.createElement('div');
+    div.className = 'table-confirm-item';
+    div.innerHTML = `
+      <div class="table-confirm-label">Table ${i + 1} <span class="table-confirm-meta">${rows.length} rows × ${colCount} cols</span></div>
+      <div class="table-confirm-options">
+        ${[
+          ['header-row', 'Header row only'],
+          ['header-row-col', 'Header row + header column'],
+          ['title-header-row', 'Title bar + header row'],
+          ['title-header-row-col', 'Title bar + header row + header column'],
+        ].map(([val, label]) => `
+          <label class="table-option ${detected === val ? 'selected' : ''}">
+            <input type="radio" name="table_${i}" value="${val}" ${detected === val ? 'checked' : ''}>
+            ${label}
+          </label>
+        `).join('')}
+      </div>
+      <div class="table-bold-col" id="boldColOption_${i}" style="${detected === 'header-row' ? '' : 'display:none'}">
+        <div class="table-confirm-label" style="margin-top:12px;">Bold first column?</div>
+        <div class="table-confirm-options">
+          <label class="table-option">
+            <input type="radio" name="boldcol_${i}" value="no" checked> No
+          </label>
+          <label class="table-option">
+            <input type="radio" name="boldcol_${i}" value="yes"> Yes
+          </label>
+        </div>
+      </div>
+    `;
+
+    // Update selection highlight on change and show/hide bold col option
+    div.querySelectorAll('input[type=radio][name="table_' + i + '"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        div.querySelectorAll('.table-option').forEach(l => {
+          if (l.querySelector('input[name="table_' + i + '"]')) l.classList.remove('selected');
+        });
+        radio.closest('.table-option').classList.add('selected');
+        _tableDecisions[i] = radio.value;
+        // Show bold col option only for header-row
+        const boldColOption = document.getElementById('boldColOption_' + i);
+        boldColOption.style.display = radio.value === 'header-row' ? '' : 'none';
+      });
+    });
+
+    div.querySelectorAll('input[type=radio][name="boldcol_' + i + '"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        div.querySelectorAll('label').forEach(l => {
+          if (l.querySelector('input[name="boldcol_' + i + '"]')) l.classList.remove('selected');
+        });
+        radio.closest('.table-option').classList.add('selected');
+      });
+    });
+
+    body.appendChild(div);
+  });
+
+  modal.classList.remove('hidden');
+}
+
+function confirmTables() {
+  let finalHTML = _pendingHTML;
+
+  _pendingTables.forEach((table, i) => {
+    const format = _tableDecisions[i];
+    const boldColRadio = document.querySelector('input[name="boldcol_' + i + '"]:checked');
+    const boldFirstCol = format === 'header-row' && boldColRadio && boldColRadio.value === 'yes';
+    const tableHTML = buildTableHTML(table, format, boldFirstCol);
+    finalHTML = finalHTML.replace(`<!--TABLE_PLACEHOLDER_${i}-->`, tableHTML);
+  });
+
+  finalHTML = finalHTML.replace(/\n{3,}/g, '\n\n').trim();
+
+  document.getElementById('output').value = finalHTML;
+  document.getElementById('outputCard').classList.remove('hidden');
+  document.getElementById('tableModal').classList.add('hidden');
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-value">${_pendingStats.headings}</div><div class="stat-label">Headings</div></div>
+    <div class="stat"><div class="stat-value">${_pendingStats.jumpLinks}</div><div class="stat-label">Jump Links</div></div>
+    <div class="stat"><div class="stat-value">${_pendingStats.ctaButtons}</div><div class="stat-label">CTA Buttons</div></div>
+    <div class="stat"><div class="stat-value">${_pendingTables.length}</div><div class="stat-label">Tables</div></div>
+  `;
+
+  if (_pendingStats.unresolvedAnchors > 0) {
+    setStatus(`⚠ Conversion complete — ${_pendingStats.unresolvedAnchors} link(s) could not be matched to a heading. Search the output for "#UNRESOLVED-" and fix before publishing.`, 'error');
+  } else {
+    setStatus('✓ Conversion complete.', 'success');
+  }
+  document.getElementById('convertBtn').disabled = false;
+}
+
+async function convert() {
+  const url = document.getElementById('docUrl').value.trim();
+  if (!url) { setStatus('Please enter a Google Doc URL.', 'error'); return; }
+
+  const docId = extractDocId(url);
+  if (!docId) { setStatus('Could not parse document ID from that URL.', 'error'); return; }
+
+  document.getElementById('convertBtn').disabled = true;
+  setStatus('Fetching document…', 'loading');
+
+  try {
+    const rawHtml = await fetchDocHTML(docId);
+    setStatus('Transforming content…', 'loading');
+
+    await new Promise(r => setTimeout(r, 100)); // let UI update
+
+    const { html, stats, pendingTables, articleTitle } = parseAndTransform(rawHtml);
+    const titlePrefix = articleTitle ? articleTitle + '\n\n' : '';
+
+    if (pendingTables.length > 0) {
+      setStatus(`Found ${pendingTables.length} table${pendingTables.length > 1 ? 's' : ''} — please confirm formatting.`, 'loading');
+      showTableConfirmation(pendingTables, titlePrefix + html, stats);
+      // convertBtn re-enabled after confirmTables()
+      return;
+    }
+
+    document.getElementById('output').value = titlePrefix + html;
+    document.getElementById('outputCard').classList.remove('hidden');
+
+    document.getElementById('stats').innerHTML = `
+      <div class="stat"><div class="stat-value">${stats.headings}</div><div class="stat-label">Headings</div></div>
+      <div class="stat"><div class="stat-value">${stats.jumpLinks}</div><div class="stat-label">Jump Links</div></div>
+      <div class="stat"><div class="stat-value">${stats.ctaButtons}</div><div class="stat-label">CTA Buttons</div></div>
+    `;
+
+    if (stats.unresolvedAnchors > 0) {
+      setStatus(`⚠ Conversion complete — ${stats.unresolvedAnchors} link(s) could not be matched to a heading. Search the output for "#UNRESOLVED-" and fix before publishing.`, 'error');
+    } else {
+      setStatus('✓ Conversion complete.', 'success');
+    }
+  } catch (err) {
+    setStatus('Error: ' + err.message, 'error');
+  }
+
+  document.getElementById('convertBtn').disabled = false;
+}
+
+function copyOutput() {
+  const ta = document.getElementById('output');
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const flash = document.getElementById('copyFlash');
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 1800);
+  });
+}
+
+function clearAll() {
+  document.getElementById('docUrl').value = '';
+  document.getElementById('output').value = '';
+  document.getElementById('outputCard').classList.add('hidden');
+  document.getElementById('status').innerHTML = '';
+}
+
+document.getElementById('docUrl').addEventListener('keydown', e => {
+  if (e.key === 'Enter') convert();
+});
+</script>
+
+
+<!-- Table confirmation modal -->
+<div class="modal-overlay hidden" id="tableModal">
+  <div class="modal">
+    <div class="modal-title">Confirm Table Formatting</div>
+    <div class="modal-subtitle">The tool has detected the format of each table below. Review and adjust if needed, then click Confirm to generate the output.</div>
+    <div id="tableModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="document.getElementById('tableModal').classList.add('hidden'); setStatus('Cancelled.', ''); document.getElementById('convertBtn').disabled = false;">Cancel</button>
+      <button onclick="confirmTables()">Confirm & Generate Output</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

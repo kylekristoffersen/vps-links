@@ -1,0 +1,36 @@
+# Tools site: the VEIT converter (team login "veit" or admin), plus admin-only
+# tools: /crossbuilder/ and /links/ (snippets). In-page login via toolgate.
+server {
+  server_name 107-173-7-177.sslip.io;
+  root /var/www/veit-tools;
+  index veit-converter.html;
+
+  include /etc/nginx/snippets/toolgate.conf;
+  auth_request /_gate/check/team;
+
+  include /etc/nginx/snippets/veit-crossbuilder.conf;
+  include /etc/nginx/snippets/vps-links.conf;
+  location / {
+    add_header Cache-Control "no-cache";
+    try_files $uri $uri/ =404;
+  }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/107-173-7-177.sslip.io/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/107-173-7-177.sslip.io/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+}
+server {
+    if ($host = 107-173-7-177.sslip.io) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+  listen 80;
+  server_name 107-173-7-177.sslip.io;
+    return 404; # managed by Certbot
+
+
+}
