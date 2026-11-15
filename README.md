@@ -1,15 +1,67 @@
-# VPS links
+# VPS links and login
 
-Kyle's link page for the tools hosted on the VPS:
-**https://107-173-7-177.sslip.io/links/** (admin login).
+Kyle's front door to the tools on the VPS (Ubuntu 20.04, administered as root):
 
-- The page: `site/index.html`. To add or change a tool, edit the `<li>` list
-  there and push to `main`; the VPS pulls within a minute
-  (`/etc/cron.d/vps-links`), and nginx serves `site/` straight from the clone
-  at `/opt/vps-links`.
-- nginx: `deploy/nginx-links.conf`, copied to
-  `/etc/nginx/snippets/vps-links.conf` and included in the HTTPS server block
-  of `/etc/nginx/sites-available/veit-tools`. It is a copy, so after changing
-  it in the repo, copy it again on the VPS, then `nginx -t && systemctl reload nginx`.
-- GitHub access from the VPS: read-only deploy key
-  `/root/.ssh/links_deploy`, SSH alias `github-links`.
+- **https://107-173-7-177.sslip.io/links/**: the link page, admin login only.
+- **The in-page login (toolgate)** used by every tool on the VPS: the
+  converter, the Crossbuilder, the link page, the single-page tools and the
+  RSS filter. It replaces the browser's password popup.
+
+## The link page
+
+`site/index.html`. Single-page tools live beside it in `site/tools/` and
+open at `/links/tools/<file>.html`. To add or change a tool, edit the page
+(or drop the file into `site/tools/`) and push to `main`. The VPS pulls within
+a minute, and nginx serves `site/` straight from the clone at `/opt/vps-links`.
+
+The single-page tools keep their data in the browser (localStorage), so each
+device starts empty. Unseen's lists come across by importing the
+`unseen-lists.json` export once per device.
+
+## The login (toolgate)
+
+`gate/toolgate.py`, standard library only, runs as user `toolgate` on
+127.0.0.1:8600 with the system Python 3.8 (`deploy/toolgate.service`).
+Tests: `python3 gate/test_toolgate.py`.
+
+nginx asks it before serving any page (`auth_request`), using
+`deploy/nginx/toolgate.conf`:
+
+| Check | Who passes |
+|---|---|
+| `/_gate/check/team` | the team login (`veit`) and the admin login |
+| `/_gate/check/admin` | the admin login (`kyle`) only |
+
+The tools server block requires `team` (so the converter is open to the
+teammate); `/crossbuilder/` and `/links/` require `admin`; the RSS filter's
+server block requires `admin`, except its secret feed address.
+
+- **Logins** are read from the existing htpasswd files:
+  `/etc/nginx/.admin-tools-htpasswd` (admin) and
+  `/etc/nginx/.veit-tools-htpasswd` (team). Change a password with
+  `htpasswd /etc/nginx/.admin-tools-htpasswd kyle`. A change takes effect at
+  once and signs that login out on every device.
+- **Sessions:** a signed cookie for `107-173-7-177.sslip.io` and its
+  subdomains (so one sign-in covers the RSS filter too). "Keep me signed in"
+  lasts 30 days; otherwise 12 hours, ending when the browser closes.
+  `/_gate/logout` signs out this device. To sign out every device at once,
+  replace the secret and restart:
+  `python3 /opt/vps-links/gate/toolgate.py new-secret > /etc/toolgate/secret && systemctl restart toolgate`.
+- **Wrong passwords:** after 5 wrong tries from one address (or 20 for one
+  login name) within 15 minutes, sign-in is refused until the window passes.
+  Failed and successful sign-ins are logged: `journalctl -u toolgate`.
+- **Signed in but not allowed** (the teammate on `/links/`): a "Not
+  available" page with a link to the converter.
+
+## On the VPS
+
+| Piece | Where |
+|---|---|
+| Clone | `/opt/vps-links` (deploy key `/root/.ssh/links_deploy`, SSH alias `github-links`) |
+| Auto-update | `/etc/cron.d/vps-links` runs `deploy/update.sh` every minute; it restarts toolgate when `gate/` changed. Log: `/var/log/vps-links-update.log` |
+| Login service | `/etc/systemd/system/toolgate.service` (copy of `deploy/toolgate.service`), user `toolgate` (in group `www-data` to read the admin password file); secret `/etc/toolgate/secret` |
+| nginx | `/etc/nginx/snippets/toolgate.conf`, `/etc/nginx/snippets/vps-links.conf`, and the site files `/etc/nginx/sites-available/veit-tools` and `rss-filter`, all copies of `deploy/nginx/` |
+
+The nginx and service files are copies, so a pull never changes them. After
+changing one here, copy it over on the VPS, then `nginx -t && systemctl reload nginx`
+(or `systemctl daemon-reload && systemctl restart toolgate`).
