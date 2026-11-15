@@ -124,6 +124,8 @@ check("admin -> admin pages 204", st == 204 and h.get("X-Gate-User") == "kyle")
 st, _, _ = req("GET", "/_gate/check/team", cookie=admin_tok)
 check("admin -> team pages 204", st == 204)
 
+st, h, _ = login("  Kyle ", "admin-pass")
+check("login name ignores capitals and spaces", st == 302 and token_of(h))
 st, h, _ = login("veit", "team-pass", keep="")
 team_tok = token_of(h)
 check("team login without keep -> session cookie", st == 302 and "Max-Age" not in h.get("Set-Cookie", "x"))

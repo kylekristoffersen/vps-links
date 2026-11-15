@@ -168,7 +168,7 @@ class Users:
                             if not line or line.startswith("#") or ":" not in line:
                                 continue
                             name, hashed = line.split(":", 1)
-                            users[name] = (hashed, role)
+                            users[name.lower()] = (hashed, role)
                 except OSError as ex:
                     log("cannot read %s: %s" % (path, ex))
             self._users, self._stamp = users, stamp_t
@@ -473,7 +473,8 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             length = 0
         form = parse_qs(self.rfile.read(length).decode("utf-8", "replace"))
-        name = form.get("username", [""])[0].strip()
+        # Login names are lowercase in the password files; phones often capitalise.
+        name = form.get("username", [""])[0].strip().lower()
         password = form.get("password", [""])[0]
         keep = form.get("keep", [""])[0] == "1"
         next_url = safe_next(form.get("next", [""])[0])
