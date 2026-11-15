@@ -3,9 +3,14 @@
 Kyle's front door to the tools on the VPS (Ubuntu 20.04, administered as root):
 
 - **https://107-173-7-177.sslip.io/links/**: the link page, admin login only.
-- **The in-page login (toolgate)** used by every tool on the VPS: the
-  converter, the Crossbuilder, the link page, the single-page tools and the
-  RSS filter. It replaces the browser's password popup.
+- **The in-page login (toolgate)** used by the tools site: the converter,
+  the Crossbuilder, the link page and the single-page tools. It replaces the
+  browser's password popup.
+- **The RSS filter is not behind toolgate.** It has its own in-page sign-in
+  (repo `kylekristoffersen/rss-filter`, same `kyle` password), and it checks
+  the torrent client's secret feed address itself, so nginx must pass that
+  address through unchanged. Its nginx site is managed by that repo's
+  `deploy/apply-nginx.sh`; do not copy a toolgate config over it.
 
 ## The link page
 
@@ -33,16 +38,14 @@ nginx asks it before serving any page (`auth_request`), using
 | `/_gate/check/admin` | the admin login (`kyle`) only |
 
 The tools server block requires `team` (so the converter is open to the
-teammate); `/crossbuilder/` and `/links/` require `admin`; the RSS filter's
-server block requires `admin`, except its secret feed address.
+teammate); `/crossbuilder/` and `/links/` require `admin`.
 
 - **Logins** are read from the existing htpasswd files:
   `/etc/nginx/.admin-tools-htpasswd` (admin) and
   `/etc/nginx/.veit-tools-htpasswd` (team). Change a password with
   `htpasswd /etc/nginx/.admin-tools-htpasswd kyle`. A change takes effect at
   once and signs that login out on every device.
-- **Sessions:** a signed cookie for `107-173-7-177.sslip.io` and its
-  subdomains (so one sign-in covers the RSS filter too). "Keep me signed in"
+- **Sessions:** a signed cookie for `107-173-7-177.sslip.io`. "Keep me signed in"
   lasts 30 days; otherwise 12 hours, ending when the browser closes.
   `/_gate/logout` signs out this device. To sign out every device at once,
   replace the secret and restart:
@@ -60,7 +63,7 @@ server block requires `admin`, except its secret feed address.
 | Clone | `/opt/vps-links` (deploy key `/root/.ssh/links_deploy`, SSH alias `github-links`) |
 | Auto-update | `/etc/cron.d/vps-links` runs `deploy/update.sh` every minute; it restarts toolgate when `gate/` changed. Log: `/var/log/vps-links-update.log` |
 | Login service | `/etc/systemd/system/toolgate.service` (copy of `deploy/toolgate.service`), user `toolgate` (in group `www-data` to read the admin password file); secret `/etc/toolgate/secret` |
-| nginx | `/etc/nginx/snippets/toolgate.conf`, `/etc/nginx/snippets/vps-links.conf`, and the site files `/etc/nginx/sites-available/veit-tools` and `rss-filter`, all copies of `deploy/nginx/` |
+| nginx | `/etc/nginx/snippets/toolgate.conf`, `/etc/nginx/snippets/vps-links.conf`, and the site file `/etc/nginx/sites-available/veit-tools`, all copies of `deploy/nginx/` |
 
 The nginx and service files are copies, so a pull never changes them. After
 changing one here, copy it over on the VPS, then `nginx -t && systemctl reload nginx`
