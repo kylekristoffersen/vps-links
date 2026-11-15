@@ -68,7 +68,7 @@ def write(path, user, pw, salt=b"abcd1234"):
 
 write(admin_f, "kyle", "admin-pass")
 write(team_f, "veit", "team-pass")
-server = toolgate.make_server(b"k" * 48, admin_f, team_f, "127.0.0.1:0")
+server = toolgate.make_server(b"k" * 48, admin_f, team_f, "127.0.0.1:0", state_dir=tmp)
 port = server.server_address[1]
 threading.Thread(target=server.serve_forever, daemon=True).start()
 
@@ -145,6 +145,28 @@ tampered = admin_tok[:-2] + ("AA" if not admin_tok.endswith("AA") else "BB")
 st, _, _ = req("GET", "/_gate/check/admin", cookie=tampered)
 check("tampered token -> 401", st == 401)
 
+# saved link-page settings
+import json as _json  # noqa: E402
+JS = {"Content-Type": "application/json"}
+st, _, body = req("GET", "/_gate/prefs", cookie=admin_tok)
+check("prefs start empty", st == 200 and _json.loads(body) == {"hidden": []})
+st, _, body = req("POST", "/_gate/prefs", _json.dumps({"hidden": ["meal-planner", "BAD id", "unseen", "unseen"]}),
+                  cookie=admin_tok, headers=JS)
+check("prefs save keeps valid ids once", st == 200 and _json.loads(body) == {"hidden": ["meal-planner", "unseen"]})
+st, _, body = req("GET", "/_gate/prefs", cookie=admin_tok)
+check("prefs read back", _json.loads(body)["hidden"] == ["meal-planner", "unseen"])
+st, _, _ = req("GET", "/_gate/prefs", cookie=team_tok)
+check("team login cannot read prefs", st == 401)
+st, _, _ = req("POST", "/_gate/prefs", _json.dumps({"hidden": []}), cookie=team_tok, headers=JS)
+check("team login cannot save prefs", st == 401)
+st, _, _ = req("POST", "/_gate/prefs", "hidden=x", cookie=admin_tok,
+               headers={"Content-Type": "application/x-www-form-urlencoded"})
+check("prefs refuse a form post", st == 403)
+st, _, _ = req("POST", "/_gate/prefs", "{nope", cookie=admin_tok, headers=JS)
+check("prefs refuse bad JSON", st == 400)
+st, _, _ = req("GET", "/_gate/prefs")
+check("prefs need a session", st == 401)
+
 # password change ends sessions
 time.sleep(0.01)
 write(admin_f, "kyle", "new-admin-pass", salt=b"zzzz9999")
@@ -152,7 +174,8 @@ os.utime(admin_f, (time.time() + 5, time.time() + 5))
 st, _, _ = req("GET", "/_gate/check/admin", cookie=admin_tok)
 check("password change ends old session", st == 401)
 st, h, _ = login("kyle", "new-admin-pass")
-check("new password works", st == 302 and token_of(h))
+new_admin_tok = token_of(h)
+check("new password works", st == 302 and new_admin_tok)
 
 # removing a user ends sessions
 with open(team_f, "w") as fh:
@@ -180,6 +203,9 @@ st, _, _ = req("POST", "/_gate/login", urlencode({"username": "kyle", "password"
                headers={"Origin": "https://evil.test"}, ip="10.6.6.6")
 check("cross-site login post refused", st == 403)
 
+st, _, _ = req("POST", "/_gate/prefs", _json.dumps({"hidden": []}), cookie=new_admin_tok,
+               headers={"Content-Type": "application/json", "Origin": "https://evil.test"}, ip="10.5.5.5")
+check("prefs refuse another site's origin", st == 403)
 st, h, _ = req("GET", "/_gate/logout")
 check("logout clears cookie", st == 302 and "Max-Age=0" in h.get("Set-Cookie", ""))
 st, _, _ = req("GET", "/anything")

@@ -14,6 +14,8 @@
     --line: #e3e1da;
     --accent: #2f6f4e;
     --accent-soft: #e4efe8;
+    --on-accent: #ffffff;
+    --err: #a3341f;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -24,6 +26,8 @@
       --line: #33332f;
       --accent: #7cc49c;
       --accent-soft: #1f3328;
+      --on-accent: #10241a;
+      --err: #f0a08e;
     }
   }
   * { box-sizing: border-box; }
@@ -34,15 +38,26 @@
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   main { max-width: 720px; margin: 0 auto; padding: 40px 16px 64px; }
-  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
   h1 { font-size: 1.6rem; margin: 0; letter-spacing: -0.01em; }
-  header a { color: var(--muted); font-size: 0.9rem; }
+  .actions { display: flex; align-items: center; gap: 14px; font-size: 0.9rem; }
+  .actions a { color: var(--muted); }
+  button.edit {
+    font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text);
+  }
+  body.editing button.edit { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .status { min-height: 1.4em; margin: 0 0 18px; color: var(--muted); font-size: 0.85rem; }
+  .status.err { color: var(--err); }
   h2 {
     font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--muted); margin: 32px 0 10px; font-weight: 600;
+    color: var(--muted); margin: 26px 0 10px; font-weight: 600;
   }
+  section.empty { display: none; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
   @media (min-width: 620px) { ul.grid { grid-template-columns: 1fr 1fr; } }
+  li { position: relative; }
   a.tool {
     display: block; height: 100%;
     background: var(--card);
@@ -55,16 +70,27 @@
   }
   a.tool:hover, a.tool:focus-visible { border-color: var(--accent); transform: translateY(-1px); }
   a.tool:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .name { font-weight: 600; font-size: 1.05rem; }
+  .name { font-weight: 600; font-size: 1.05rem; padding-right: 64px; }
   .desc { color: var(--muted); margin: 4px 0 0; font-size: 0.92rem; }
   .note {
     display: inline-block; margin-top: 8px; font-size: 0.75rem; font-weight: 600;
     padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent);
   }
-  .local {
-    background: transparent; border: 1px dashed var(--line); border-radius: 12px; padding: 14px 18px;
+  button.toggle {
+    display: none;
+    position: absolute; top: 10px; right: 10px;
+    font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text);
   }
-  .local .name { font-size: 1rem; }
+  button.toggle:hover, button.toggle:focus-visible { border-color: var(--accent); }
+  body.editing button.toggle { display: block; }
+  details.hidden-tools { margin-top: 30px; }
+  details.hidden-tools summary {
+    cursor: pointer; color: var(--muted); font-size: 0.78rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;
+  }
+  details.hidden-tools a.tool { opacity: 0.7; }
   footer { margin-top: 36px; color: var(--muted); font-size: 0.82rem; }
 </style>
 </head>
@@ -72,88 +98,199 @@
 <main>
   <header>
     <h1>Kyle's Tools</h1>
-    <a href="/_gate/logout">Sign out</a>
+    <div class="actions">
+      <button class="edit" type="button" id="edit" aria-pressed="false">Edit</button>
+      <a href="/_gate/logout">Sign out</a>
+    </div>
   </header>
+  <p class="status" id="status" role="status"></p>
 
-  <!-- To add a tool: copy one <li> block into the right section, change the
-       link, name and text, then push to main. The VPS pulls within a minute.
-       A single-page tool goes in site/tools/ and links as tools/<file>.html. -->
+  <!-- To add a tool: copy one <li> block into the right section, give it a
+       new data-id (lowercase letters, digits and dashes; it is what "Hide"
+       remembers), change the link, name and text, then push to main. The VPS
+       pulls within a minute. A single-page tool goes in site/tools/ and links
+       as tools/<file>.html. -->
 
-  <h2>VEIT &amp; BAT</h2>
-  <ul class="grid">
-    <li>
-      <a class="tool" href="/">
-        <div class="name">VEIT Converter</div>
-        <p class="desc">Google Doc link to WordPress HTML for VEIT articles.</p>
-        <span class="note">Team login opens this too</span>
-      </a>
-    </li>
-    <li>
-      <a class="tool" href="/crossbuilder/">
-        <div class="name">VEIT Blog Crossbuilder</div>
-        <p class="desc">Draft and crosslink BAT Academy articles; glossary links and backlog triage.</p>
-      </a>
-    </li>
-    <li>
-      <a class="tool" href="tools/bat-seo-prompt-builder.html">
-        <div class="name">BAT SEO Article Prompt Builder</div>
-        <p class="desc">Builds the prompt for an SEO article on poultryscales.com.</p>
-      </a>
-    </li>
-    <li>
-      <a class="tool" href="tools/bat-content-prompts.html">
-        <div class="name">BAT Content Prompts</div>
-        <p class="desc">Prompts for the BAT content pipeline.</p>
-      </a>
-    </li>
-    <li>
-      <a class="tool" href="tools/diamondpro-wp-converter.html">
-        <div class="name">DiamondPro WP Article Converter</div>
-        <p class="desc">Google Doc link to clean WordPress HTML, with jump links and CTA buttons.</p>
-      </a>
-    </li>
-  </ul>
+  <section>
+    <h2>VEIT &amp; BAT</h2>
+    <ul class="grid">
+      <li data-id="veit-converter">
+        <a class="tool" href="/">
+          <div class="name">VEIT Converter</div>
+          <p class="desc">Google Doc link to WordPress HTML for VEIT articles.</p>
+          <span class="note">Team login opens this too</span>
+        </a>
+      </li>
+      <li data-id="crossbuilder">
+        <a class="tool" href="/crossbuilder/">
+          <div class="name">VEIT Blog Crossbuilder</div>
+          <p class="desc">Draft and crosslink BAT Academy articles; glossary links and backlog triage.</p>
+        </a>
+      </li>
+      <li data-id="bat-seo-prompt-builder">
+        <a class="tool" href="tools/bat-seo-prompt-builder.html">
+          <div class="name">BAT SEO Article Prompt Builder</div>
+          <p class="desc">Builds the prompt for an SEO article on poultryscales.com.</p>
+        </a>
+      </li>
+      <li data-id="bat-content-prompts">
+        <a class="tool" href="tools/bat-content-prompts.html">
+          <div class="name">BAT Content Prompts</div>
+          <p class="desc">Prompts for the BAT content pipeline.</p>
+        </a>
+      </li>
+      <li data-id="diamondpro-wp-converter">
+        <a class="tool" href="tools/diamondpro-wp-converter.html">
+          <div class="name">DiamondPro WP Article Converter</div>
+          <p class="desc">Google Doc link to clean WordPress HTML, with jump links and CTA buttons.</p>
+        </a>
+      </li>
+    </ul>
+  </section>
 
-  <h2>Personal</h2>
-  <ul class="grid">
-    <li>
-      <a class="tool" href="https://rss.107-173-7-177.sslip.io/">
-        <div class="name">RSS Filter</div>
-        <p class="desc">Filters torrent RSS feeds before they reach the client.</p>
-        <span class="note">Signs in separately</span>
-      </a>
-    </li>
-    <li>
-      <a class="tool" href="tools/unseen.html">
-        <div class="name">Unseen</div>
-        <p class="desc">TMDb browser that hides what you've seen. Import your lists file once per device.</p>
-      </a>
-    </li>
-    <li>
-      <a class="tool" href="tools/meal-planner.html">
-        <div class="name">Meal Prep Planner</div>
-        <p class="desc">Weekly meal plan and shopping list.</p>
-      </a>
-    </li>
-  </ul>
+  <section>
+    <h2>Personal</h2>
+    <ul class="grid">
+      <li data-id="rss-filter">
+        <a class="tool" href="https://rss.107-173-7-177.sslip.io/">
+          <div class="name">RSS Filter</div>
+          <p class="desc">Filters torrent RSS feeds before they reach the client.</p>
+          <span class="note">Signs in separately</span>
+        </a>
+      </li>
+      <li data-id="unseen">
+        <a class="tool" href="tools/unseen.html">
+          <div class="name">Unseen</div>
+          <p class="desc">TMDb browser that hides what you've seen. Import your lists file once per device.</p>
+        </a>
+      </li>
+      <li data-id="meal-planner">
+        <a class="tool" href="tools/meal-planner.html">
+          <div class="name">Meal Prep Planner</div>
+          <p class="desc">Weekly meal plan and shopping list.</p>
+        </a>
+      </li>
+    </ul>
+  </section>
 
-  <h2>Only on the PC for now</h2>
-  <ul class="grid">
-    <li class="local">
-      <div class="name">Forum Term Finder</div>
-      <p class="desc">Desktop window; crawls a forum thread for terms into Excel.</p>
-    </li>
-    <li class="local">
-      <div class="name">Trello tools</div>
-      <p class="desc">Trello to Todoist sync, shared cards, reserve tracker (scripts).</p>
-    </li>
-    <li class="local">
-      <div class="name">VEIT LN Pipeline</div>
-      <p class="desc">Desktop shortcut.</p>
-    </li>
-  </ul>
+  <details class="hidden-tools" id="hidden-box" hidden>
+    <summary id="hidden-summary">Hidden</summary>
+    <ul class="grid" id="hidden-list"></ul>
+  </details>
 
   <footer>Source: github.com/kylekristoffersen/vps-links</footer>
 </main>
+
+<script>
+(function () {
+  "use strict";
+  var body = document.body;
+  var editBtn = document.getElementById("edit");
+  var statusEl = document.getElementById("status");
+  var box = document.getElementById("hidden-box");
+  var boxList = document.getElementById("hidden-list");
+  var boxSummary = document.getElementById("hidden-summary");
+  var hidden = [];
+  var saving = null;
+
+  // Remember where every card lives so "Show" can put it back in place.
+  var cards = Array.prototype.slice.call(document.querySelectorAll("section li[data-id]"));
+  cards.forEach(function (li, i) {
+    li.dataset.order = String(i);
+    li.homeList = li.parentNode;
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "toggle";
+    btn.addEventListener("click", function () { toggle(li.dataset.id); });
+    li.appendChild(btn);
+  });
+
+  function say(text, isError) {
+    statusEl.textContent = text || "";
+    statusEl.classList.toggle("err", !!isError);
+  }
+
+  function placeBack(li) {
+    var list = li.homeList, order = Number(li.dataset.order), next = null;
+    Array.prototype.forEach.call(list.children, function (other) {
+      if (!next && Number(other.dataset.order) > order) next = other;
+    });
+    list.insertBefore(li, next);
+  }
+
+  function render() {
+    cards.forEach(function (li) {
+      var isHidden = hidden.indexOf(li.dataset.id) !== -1;
+      var btn = li.querySelector("button.toggle");
+      var name = li.querySelector(".name").textContent;
+      btn.textContent = isHidden ? "Show" : "Hide";
+      btn.setAttribute("aria-label", (isHidden ? "Show " : "Hide ") + name);
+      if (isHidden && li.parentNode !== boxList) boxList.appendChild(li);
+      if (!isHidden && li.parentNode === boxList) placeBack(li);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("main > section"), function (sec) {
+      sec.classList.toggle("empty", !sec.querySelector("li"));
+    });
+    var n = boxList.children.length;
+    box.hidden = n === 0;
+    boxSummary.textContent = "Hidden (" + n + ")";
+    // Hidden cards stay in order of the page, not of when they were hidden.
+    Array.prototype.slice.call(boxList.children)
+      .sort(function (a, b) { return a.dataset.order - b.dataset.order; })
+      .forEach(function (li) { boxList.appendChild(li); });
+  }
+
+  function save() {
+    var sent = hidden.slice();
+    say("Saving…");
+    saving = fetch("/_gate/prefs", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hidden: sent })
+    }).then(function (r) {
+      if (r.status === 401) throw new Error("Signed out. Reload the page to sign in again.");
+      if (!r.ok) throw new Error("Couldn't save (" + r.status + "). Try again.");
+      return r.json();
+    }).then(function () {
+      say("Saved. Applies on all your devices.");
+    }).catch(function (e) {
+      say(e.message || "Couldn't save. Check your connection.", true);
+    });
+  }
+
+  function toggle(id) {
+    var i = hidden.indexOf(id);
+    if (i === -1) hidden.push(id); else hidden.splice(i, 1);
+    render();
+    save();
+  }
+
+  editBtn.addEventListener("click", function () {
+    var on = !body.classList.contains("editing");
+    body.classList.toggle("editing", on);
+    editBtn.setAttribute("aria-pressed", String(on));
+    editBtn.textContent = on ? "Done" : "Edit";
+    if (on) {
+      box.open = true;
+      say("Hide a tool to move it into Hidden. Nothing is deleted.");
+    } else if (!statusEl.classList.contains("err")) {
+      say("");
+    }
+  });
+
+  render();
+  fetch("/_gate/prefs", { credentials: "same-origin" })
+    .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+    .then(function (data) {
+      var known = cards.map(function (li) { return li.dataset.id; });
+      hidden = (data.hidden || []).filter(function (id) { return known.indexOf(id) !== -1; });
+      render();
+    })
+    .catch(function () {
+      say("Couldn't load your hidden tools, so all are shown.", true);
+    });
+})();
+</script>
 </body>
 </html>

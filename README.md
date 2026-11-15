@@ -19,6 +19,13 @@ open at `/links/tools/<file>.html`. To add or change a tool, edit the page
 (or drop the file into `site/tools/`) and push to `main`. The VPS pulls within
 a minute, and nginx serves `site/` straight from the clone at `/opt/vps-links`.
 
+**Hiding tools:** Edit (top right) shows a Hide button on every card;
+hidden tools move into a collapsed "Hidden" section, where Show brings them
+back. The list is saved by toolgate per login (`/_gate/prefs`, stored in
+`/var/lib/toolgate/prefs.json`), so it is the same on every device. Each
+card's `data-id` is what is remembered, so keep it when editing a card.
+Page tests: `node test/test_links_page.js` (needs `npm install jsdom`).
+
 The single-page tools keep their data in the browser (localStorage), so each
 device starts empty. Unseen's lists come across by importing the
 `unseen-lists.json` export once per device.
@@ -62,7 +69,7 @@ teammate); `/crossbuilder/` and `/links/` require `admin`.
 |---|---|
 | Clone | `/opt/vps-links` (deploy key `/root/.ssh/links_deploy`, SSH alias `github-links`) |
 | Auto-update | `/etc/cron.d/vps-links` runs `deploy/update.sh` every minute; it restarts toolgate when `gate/` changed. Log: `/var/log/vps-links-update.log` |
-| Login service | `/etc/systemd/system/toolgate.service` (copy of `deploy/toolgate.service`), user `toolgate` (in group `www-data` to read the admin password file); secret `/etc/toolgate/secret` |
+| Login service | `/etc/systemd/system/toolgate.service` (copy of `deploy/toolgate.service`), user `toolgate` (in group `www-data` to read the admin password file); secret `/etc/toolgate/secret`; saved settings `/var/lib/toolgate/prefs.json` |
 | nginx | `/etc/nginx/snippets/toolgate.conf`, `/etc/nginx/snippets/vps-links.conf`, and the site file `/etc/nginx/sites-available/veit-tools`, all copies of `deploy/nginx/` |
 
 The nginx and service files are copies, so a pull never changes them. After

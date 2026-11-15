@@ -12,6 +12,9 @@ Environment=GATE_TEAM_FILE=/etc/nginx/.veit-tools-htpasswd
 Environment=GATE_KEY_FILE=/etc/toolgate/secret
 Environment=GATE_MAIN_HOST=107-173-7-177.sslip.io
 Environment=GATE_LISTEN=127.0.0.1:8600
+# Saved link-page settings (which tools are hidden): /var/lib/toolgate
+StateDirectory=toolgate
+StateDirectoryMode=0700
 ExecStart=/usr/bin/python3 /opt/vps-links/gate/toolgate.py
 Restart=on-failure
 RestartSec=2

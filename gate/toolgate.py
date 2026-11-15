@@ -15,6 +15,8 @@ and sends browsers here for the pages people see:
     /_gate/login         the sign-in form (GET) and its submission (POST)
     /_gate/logout        sign out on this device
     /_gate/denied        nginx's 403 handler
+    /_gate/prefs         the link page's saved settings (which tools are
+                         hidden), per login; GET reads, POST (JSON) saves
 
 Logins come from the existing htpasswd files, so nobody needs a new password:
 the admin file (kyle) opens everything, the team file (veit) opens what nginx
@@ -33,6 +35,7 @@ import hmac
 import html
 import json
 import os
+import re
 import secrets
 import sys
 import threading
@@ -53,6 +56,8 @@ MAIN_HOST = os.environ.get("GATE_MAIN_HOST", "107-173-7-177.sslip.io")
 COOKIE_DOMAIN = os.environ.get("GATE_COOKIE_DOMAIN", MAIN_HOST)
 LISTEN = os.environ.get("GATE_LISTEN", "127.0.0.1:8600")
 INSECURE_COOKIE = os.environ.get("GATE_INSECURE_COOKIE") == "1"  # tests only
+# Saved link-page settings live here (systemd StateDirectory=toolgate).
+STATE_DIR = os.environ.get("GATE_STATE_DIR") or os.environ.get("STATE_DIRECTORY") or "/var/lib/toolgate"
 
 COOKIE = "kt_session"
 LONG_SESSION = 30 * 24 * 3600   # "Keep me signed in"
@@ -264,6 +269,48 @@ class Brakes:
 
 
 # --------------------------------------------------------------------------
+# Saved settings for the link page (which tools are hidden), per login
+
+TOOL_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
+MAX_HIDDEN = 100
+
+
+class Prefs:
+    def __init__(self, state_dir: str):
+        self.path = os.path.join(state_dir, "prefs.json")
+        self._lock = threading.Lock()
+
+    def _read_all(self) -> Dict[str, Dict]:
+        try:
+            with open(self.path, encoding="utf-8") as fh:
+                data = json.load(fh)
+            return data if isinstance(data, dict) else {}
+        except (OSError, ValueError):
+            return {}
+
+    def get(self, name: str) -> Dict:
+        with self._lock:
+            mine = self._read_all().get(name) or {}
+        hidden = [h for h in mine.get("hidden", []) if isinstance(h, str) and TOOL_ID_RE.match(h)]
+        return {"hidden": hidden}
+
+    def set_hidden(self, name: str, hidden: List[str]) -> Dict:
+        clean = []
+        for h in hidden:
+            if isinstance(h, str) and TOOL_ID_RE.match(h) and h not in clean:
+                clean.append(h)
+        clean = clean[:MAX_HIDDEN]
+        with self._lock:
+            data = self._read_all()
+            data[name] = {"hidden": clean}
+            tmp = self.path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as fh:
+                json.dump(data, fh, indent=1, sort_keys=True)
+            os.replace(tmp, self.path)
+        return {"hidden": clean}
+
+
+# --------------------------------------------------------------------------
 # Pages
 
 PAGE = """<!doctype html>
@@ -374,6 +421,7 @@ class Handler(BaseHTTPRequestHandler):
     sessions: Sessions
     users: Users
     brakes: Brakes
+    prefs: Prefs
 
     # quieter, single-line logs without query strings
     def log_message(self, fmt, *args):  # noqa: N802
@@ -424,6 +472,27 @@ class Handler(BaseHTTPRequestHandler):
     def _redirect(self, url: str, cookie: Optional[str] = None) -> None:
         self._send(302, "", {"Location": url}, cookie)
 
+    def _json(self, code: int, obj: Dict) -> None:
+        data = json.dumps(obj).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
+    def _origin_ok(self) -> bool:
+        origin = self.headers.get("Origin")
+        return INSECURE_COOKIE or not origin or origin == "https://" + MAIN_HOST
+
+    def _read_body(self, limit: int) -> bytes:
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = 0
+        return self.rfile.read(min(max(length, 0), limit))
+
     # ---- routes
 
     def do_HEAD(self):  # noqa: N802
@@ -456,6 +525,12 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/_gate/logout":
             return self._redirect("https://%s/_gate/login" % MAIN_HOST, self._cookie("", 0))
 
+        if path == "/_gate/prefs":
+            who = self._session()
+            if not who or who[1] != "admin":
+                return self._json(401, {"error": "not signed in"})
+            return self._json(200, self.prefs.get(who[0]))
+
         if path == "/_gate/denied":
             who = self._session()
             return self._send(403, denied_page(who[0] if who else "?"))
@@ -463,6 +538,8 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(404, "Not found")
 
     def do_POST(self):  # noqa: N802
+        if self.path.split("?", 1)[0] == "/_gate/prefs":
+            return self._post_prefs()
         if self.path.split("?", 1)[0] != "/_gate/login":
             return self._send(404, "Not found")
         origin = self.headers.get("Origin")
@@ -504,6 +581,29 @@ class Handler(BaseHTTPRequestHandler):
         return self._redirect(next_url, self._cookie(token, lifetime if keep else None))
 
 
+    def _post_prefs(self) -> None:
+        who = self._session()
+        if not who or who[1] != "admin":
+            return self._json(401, {"error": "not signed in"})
+        # Another site cannot send a JSON body with this content type without
+        # the browser asking this server first, and its Origin would not match.
+        ctype = (self.headers.get("Content-Type") or "").split(";", 1)[0].strip().lower()
+        if ctype != "application/json" or not self._origin_ok():
+            return self._json(403, {"error": "refused"})
+        try:
+            body = json.loads(self._read_body(16384).decode("utf-8"))
+            hidden = body["hidden"]
+            if not isinstance(hidden, list):
+                raise ValueError
+        except (ValueError, KeyError, TypeError, UnicodeDecodeError):
+            return self._json(400, {"error": "expected a hidden list"})
+        try:
+            return self._json(200, self.prefs.set_hidden(who[0], hidden))
+        except OSError as ex:
+            log("cannot save settings: %s" % ex)
+            return self._json(500, {"error": "could not save"})
+
+
 def load_key(path: str) -> bytes:
     with open(path, "rb") as fh:
         key = fh.read().strip()
@@ -512,8 +612,10 @@ def load_key(path: str) -> bytes:
     return key
 
 
-def make_server(key: bytes, admin_file: str, team_file: str, listen: str) -> ThreadingHTTPServer:
+def make_server(key: bytes, admin_file: str, team_file: str, listen: str,
+                state_dir: Optional[str] = None) -> ThreadingHTTPServer:
     users = Users(admin_file, team_file)
+    Handler.prefs = Prefs(state_dir or STATE_DIR)
     Handler.users = users
     Handler.sessions = Sessions(key, users)
     Handler.brakes = Brakes()
