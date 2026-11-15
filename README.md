@@ -11,6 +11,10 @@ Kyle's front door to the tools on the VPS (Ubuntu 20.04, administered as root):
   the torrent client's secret feed address itself, so nginx must pass that
   address through unchanged. Its nginx site is managed by that repo's
   `deploy/apply-nginx.sh`; do not copy a toolgate config over it.
+- **The Meal Prep Planner is not behind toolgate either**
+  (https://mealprep.107-173-7-177.sslip.io, `/opt/mealprep`, port 5020). It has
+  its own in-page sign-in, and its `/cook/<id>` share links are public on
+  purpose. Its nginx site belongs to its own repo.
 
 ## The link page
 
