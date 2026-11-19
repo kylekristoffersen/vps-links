@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Trello -> Todoist sync page for the VPS.
 
-A small web page at /trello-sync/ (behind the admin login in nginx) around
+A small web page at https://trelloistsync.107-173-7-177.sslip.io/ (behind the admin
+login in nginx) around
 trello_to_todoist.py, which runs unchanged as a subprocess:
 
 - Sync now / Preview changes (--dry-run), with the output kept per run
@@ -34,8 +35,9 @@ PAGE_FILE = os.path.join(HERE, "page.html")
 DATA_DIR = os.environ.get("TTS_DATA_DIR") or os.environ.get("STATE_DIRECTORY") or "/var/lib/trello-sync"
 PYTHON = os.environ.get("TTS_PYTHON", sys.executable)
 LISTEN = os.environ.get("TTS_LISTEN", "127.0.0.1:8620")
-PREFIX = "/trello-sync"
-MAIN_ORIGIN = "https://" + os.environ.get("TTS_MAIN_HOST", "107-173-7-177.sslip.io")
+# Path the page is served under: "" on its own subdomain (the default).
+PREFIX = os.environ.get("TTS_PREFIX", "").rstrip("/")
+MAIN_ORIGIN = "https://" + os.environ.get("TTS_MAIN_HOST", "trelloistsync.107-173-7-177.sslip.io")
 ALLOW_ANY_ORIGIN = os.environ.get("TTS_ALLOW_ANY_ORIGIN") == "1"  # tests only
 
 RUN_TIMEOUT = 600
@@ -241,6 +243,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _route(self) -> str:
         p = self.path.split("?", 1)[0]
+        if not PREFIX:
+            return p
         return p[len(PREFIX):] if p.startswith(PREFIX + "/") else ""
 
     def do_HEAD(self):  # noqa: N802

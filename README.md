@@ -36,13 +36,18 @@ device starts empty. Unseen's lists come across by importing the
 
 ## Trello -> Todoist (`trello-sync/`)
 
-https://107-173-7-177.sslip.io/trello-sync/ (admin login). A page around
+https://trelloistsync.107-173-7-177.sslip.io/ (admin login; one sign-in covers it,
+because the toolgate cookie is set for the main host and its subdomains).
+The old `/trello-sync/` path redirects there. A page around
 `trello_to_todoist.py` (the script from the PC's Trello Tools folder, which
 runs unchanged except that `TTS_STATE_FILE` moves its saved cards out of the
 clone): Sync now, Preview changes (`--dry-run`), automatic sync (off / 15 min /
 hourly / daily 08:00 Prague time), run history with output, the three tokens,
 and a one-time import of the PC's `synced_cards.json`.
 
+- nginx: its own site `deploy/nginx/trelloistsync` (installed with only
+  `listen 80`, then `certbot --nginx` added HTTPS), including the toolgate
+  snippet with `auth_request /_gate/check/admin;`.
 - Service `trello-sync` (`deploy/trello-sync.service`), user `trellosync`,
   127.0.0.1:8620, stdlib only; the script runs with `/opt/trello-sync-venv`
   (needs `requests`).

@@ -1,0 +1,19 @@
+# Trello -> Todoist page (trello-sync/app.py on 127.0.0.1:8620), admin login
+# via toolgate. Installed as /etc/nginx/sites-available/trelloistsync with
+# only "listen 80"; certbot --nginx then adds HTTPS and the redirect.
+server {
+  listen 80;
+  server_name trelloistsync.107-173-7-177.sslip.io;
+  client_max_body_size 2m;
+
+  include /etc/nginx/snippets/toolgate.conf;
+  auth_request /_gate/check/admin;
+
+  location / {
+    add_header Cache-Control "no-cache";
+    proxy_pass http://127.0.0.1:8620;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_read_timeout 120s;
+  }
+}

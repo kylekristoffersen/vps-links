@@ -29,7 +29,7 @@ def req(method, path, body=None, headers=None):
     c = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
     h = {"Content-Type": "application/json"} if body is not None else {}
     h.update(headers or {})
-    c.request(method, "/trello-sync" + path, body=json.dumps(body) if isinstance(body, dict) else body, headers=h)
+    c.request(method, path, body=json.dumps(body) if isinstance(body, dict) else body, headers=h)
     r = c.getresponse(); raw = r.read()
     try: return r.status, json.loads(raw)
     except ValueError: return r.status, raw.decode()
