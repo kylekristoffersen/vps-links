@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Trello to Todoist</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --text: #1d1d1b; --muted: #6b6a64; --line: #e3e1da;
+    --accent: #2f6f4e; --accent-soft: #e4efe8; --on-accent: #ffffff;
+    --err: #a3341f; --err-soft: #f8e3de; --warn: #8a5a12; --warn-soft: #f7ecd8;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161614; --card: #20201d; --text: #ecebe6; --muted: #a09e96; --line: #33332f;
+      --accent: #7cc49c; --accent-soft: #1f3328; --on-accent: #10241a;
+      --err: #f0a08e; --err-soft: #3b211b; --warn: #e8c27a; --warn-soft: #382c16;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .top a { color: var(--muted); font-size: 0.9rem; }
+  h1 { font-size: 1.6rem; margin: 6px 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 0.95rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+       margin: 0 0 12px; font-weight: 600; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button, select {
+    font: inherit; font-size: 0.95rem; padding: 9px 16px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  button:disabled { opacity: 0.55; cursor: default; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .last { margin: 0 0 14px; }
+  .last strong { display: block; font-size: 1.05rem; }
+  .muted { color: var(--muted); font-size: 0.9rem; }
+  .pill { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .pill.ok { background: var(--accent-soft); color: var(--accent); }
+  .pill.bad { background: var(--err-soft); color: var(--err); }
+  .pill.run { background: var(--warn-soft); color: var(--warn); }
+  .pill.dry { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+  .notice { padding: 10px 12px; border-radius: 8px; font-size: 0.92rem; margin: 0 0 14px; }
+  .notice.warn { background: var(--warn-soft); color: var(--warn); }
+  .notice.err { background: var(--err-soft); color: var(--err); }
+  .notice.ok { background: var(--accent-soft); color: var(--accent); }
+  .notice[hidden] { display: none; }
+  label.field { display: block; margin: 0 0 12px; font-size: 0.9rem; font-weight: 600; }
+  label.field span.state { font-weight: 400; color: var(--muted); margin-left: 6px; }
+  input[type=password] { width: 100%; margin-top: 6px; padding: 9px 11px; font: inherit; color: inherit;
+         background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+  .help { font-size: 0.85rem; color: var(--muted); margin: 0 0 14px; }
+  .help a { color: var(--muted); }
+  ul.runs { list-style: none; margin: 0; padding: 0; }
+  ul.runs li { border-top: 1px solid var(--line); padding: 10px 0; }
+  ul.runs li:first-child { border-top: 0; padding-top: 0; }
+  .run-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .run-head button { padding: 2px 10px; font-size: 0.8rem; margin-left: auto; }
+  .run-sum { margin: 4px 0 0; font-size: 0.92rem; }
+  pre { white-space: pre-wrap; word-break: break-word; font: 0.8rem/1.45 var(--mono); background: var(--bg);
+        border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 8px 0 0; max-height: 420px; overflow: auto; }
+  input[type=file] { font-size: 0.9rem; max-width: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><a href="/links/">← All tools</a><a href="/_gate/logout">Sign out</a></div>
+  <h1>Trello → Todoist</h1>
+  <p class="sub">Open Trello cards assigned to you become tasks in your Todoist project “VEIT”; finished or removed cards are cleaned up.</p>
+
+  <p class="notice warn" id="setup-note" hidden></p>
+  <p class="notice" id="msg" role="status" hidden></p>
+
+  <section class="card">
+    <h2>Sync</h2>
+    <div class="last" id="last"><strong>Loading…</strong></div>
+    <div class="row">
+      <button class="primary" id="sync" type="button">Sync now</button>
+      <button id="preview" type="button">Preview changes</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Automatic sync</h2>
+    <div class="row">
+      <select id="schedule" aria-label="Automatic sync">
+        <option value="off">Off</option>
+        <option value="15m">Every 15 minutes</option>
+        <option value="1h">Every hour</option>
+        <option value="daily">Daily at 08:00</option>
+      </select>
+      <span class="muted" id="next"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>History</h2>
+    <ul class="runs" id="runs"><li class="muted">No runs yet.</li></ul>
+  </section>
+
+  <section class="card">
+    <h2>Connections</h2>
+    <p class="help">Saved on the server, never shown again. Leave a box empty to keep what's saved.
+      Trello key and token: <a href="https://trello.com/power-ups/admin" target="_blank" rel="noopener">trello.com/power-ups/admin</a>
+      (your Power-Up → API key, then the Token link). Todoist: Settings → Integrations → Developer → API token.</p>
+    <form id="secrets" autocomplete="off">
+      <label class="field">Trello API key <span class="state" data-k="TRELLO_KEY"></span>
+        <input type="password" name="TRELLO_KEY" autocomplete="off" spellcheck="false"></label>
+      <label class="field">Trello token <span class="state" data-k="TRELLO_TOKEN"></span>
+        <input type="password" name="TRELLO_TOKEN" autocomplete="off" spellcheck="false"></label>
+      <label class="field">Todoist API token <span class="state" data-k="TODOIST_TOKEN"></span>
+        <input type="password" name="TODOIST_TOKEN" autocomplete="off" spellcheck="false"></label>
+      <button type="submit">Save connections</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Cards already synced</h2>
+    <p class="last" id="state-line">…</p>
+    <p class="help">Import <code>synced_cards.json</code> from the Trello Tools folder on your PC so the cards it
+      already turned into tasks aren't created again. Do this once, before the first real sync, and stop
+      running the sync on the PC afterwards.</p>
+    <input type="file" id="state-file" accept=".json,application/json" aria-label="synced_cards.json from the PC">
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var data = null, open = {}, poll = null;
+
+  function fmt(ts) {
+    if (!ts) return "";
+    var d = new Date(ts * 1000), today = new Date();
+    var time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (d.toDateString() === today.toDateString()) return "today " + time;
+    return d.toLocaleDateString([], { day: "numeric", month: "short" }) + " " + time;
+  }
+  function esc(s) { var e = document.createElement("span"); e.textContent = s == null ? "" : String(s); return e.innerHTML; }
+  function say(text, kind) {
+    var m = $("msg");
+    m.hidden = !text; m.textContent = text || ""; m.className = "notice " + (kind || "ok");
+  }
+  function api(path, body) {
+    var opts = { credentials: "same-origin" };
+    if (body !== undefined) {
+      opts.method = "POST"; opts.headers = { "Content-Type": "application/json" }; opts.body = JSON.stringify(body);
+    }
+    return fetch(path, opts).then(function (r) {
+      if (r.status === 401 || r.redirected) throw new Error("Signed out. Reload the page to sign in again.");
+      return r.json().then(function (j) { j._status = r.status; return j; });
+    });
+  }
+  function pill(run) {
+    if (!run.finished) return '<span class="pill run">Running</span>';
+    return run.ok ? '<span class="pill ok">OK</span>' : '<span class="pill bad">Failed</span>';
+  }
+
+  function render(d) {
+    data = d;
+    var missing = Object.keys(d.secrets).filter(function (k) { return !d.secrets[k]; });
+    var notes = [];
+    if (missing.length) notes.push("Add your connections below before syncing (" + missing.length + " missing).");
+    if (!d.state_exists) notes.push("Import synced_cards.json from your PC before the first real sync, or the cards already in Todoist get created again.");
+    $("setup-note").hidden = !notes.length;
+    $("setup-note").textContent = notes.join(" ");
+
+    var latest = d.running || d.runs[0];
+    if (!latest) {
+      $("last").innerHTML = "<strong>No runs yet</strong><span class='muted'>Try Preview changes first: it shows what would happen and changes nothing.</span>";
+    } else {
+      $("last").innerHTML = "<strong>" + esc(latest.finished ? latest.summary : "Running…") + "</strong>" +
+        "<span class='muted'>" + (latest.dry_run ? "Preview" : "Sync") + " · " + (latest.trigger === "schedule" ? "automatic" : "from this page") +
+        " · " + fmt(latest.started) + "</span>";
+    }
+    $("sync").disabled = $("preview").disabled = !!d.running;
+
+    $("schedule").value = d.schedule;
+    $("next").textContent = d.schedule === "off" ? "Only when you press Sync now." : (d.next_run ? "Next: " + fmt(d.next_run) : "");
+
+    var list = d.runs.slice();
+    if (d.running) list.unshift(d.running);
+    $("runs").innerHTML = list.length ? list.map(function (r) {
+      return '<li data-id="' + esc(r.id) + '"><div class="run-head">' + pill(r) +
+        (r.dry_run ? ' <span class="pill dry">Preview</span>' : "") +
+        ' <span class="muted">' + fmt(r.started) + (r.trigger === "schedule" ? " · automatic" : "") + "</span>" +
+        (r.finished ? '<button type="button" data-show="' + esc(r.id) + '">' + (open[r.id] ? "Hide output" : "Output") + "</button>" : "") +
+        '</div><p class="run-sum">' + esc(r.finished ? r.summary : "Running…") + "</p>" +
+        (open[r.id] ? "<pre>" + esc(open[r.id]) + "</pre>" : "") + "</li>";
+    }).join("") : '<li class="muted">No runs yet.</li>';
+
+    Array.prototype.forEach.call(document.querySelectorAll("span.state"), function (s) {
+      s.textContent = d.secrets[s.dataset.k] ? "saved ✓" : "not set";
+    });
+    $("state-line").innerHTML = d.state_exists
+      ? "<strong>" + d.cards_remembered + " card" + (d.cards_remembered === 1 ? "" : "s") + " remembered</strong>" +
+        (d.imported_at ? "<span class='muted'>Imported from the PC " + fmt(d.imported_at) + "</span>" : "")
+      : "<strong>Nothing imported yet</strong>";
+
+    clearTimeout(poll);
+    poll = setTimeout(refresh, d.running ? 1500 : 30000);
+  }
+
+  function refresh() {
+    return api("api/status").then(render).catch(function (e) { say(e.message, "err"); });
+  }
+
+  function run(dry, confirmFresh) {
+    say("");
+    api("api/run", { dry_run: dry, confirm_fresh: !!confirmFresh }).then(function (j) {
+      if (j._status === 409 && j.error === "no_state") {
+        if (confirm("No synced_cards.json has been imported. A real sync now will create a Todoist task for every open card, including ones the PC already synced. Continue anyway?")) run(dry, true);
+        return;
+      }
+      if (j._status >= 400) throw new Error(j.error || "Couldn't start.");
+      refresh();
+    }).catch(function (e) { say(e.message, "err"); });
+  }
+
+  $("sync").addEventListener("click", function () { run(false); });
+  $("preview").addEventListener("click", function () { run(true); });
+
+  $("schedule").addEventListener("change", function (ev) {
+    var v = ev.target.value;
+    if (v !== "off" && data && !data.state_exists && !confirm("Nothing has been imported from the PC yet. Turn on automatic sync anyway?")) {
+      ev.target.value = data.schedule; return;
+    }
+    api("api/schedule", { schedule: v }).then(function (j) {
+      if (j._status >= 400) throw new Error(j.error);
+      render(j); say(v === "off" ? "Automatic sync is off." : "Automatic sync is on.");
+    }).catch(function (e) { say(e.message, "err"); refresh(); });
+  });
+
+  $("runs").addEventListener("click", function (ev) {
+    var id = ev.target.getAttribute("data-show");
+    if (!id) return;
+    if (open[id]) { delete open[id]; render(data); return; }
+    api("api/run/" + encodeURIComponent(id)).then(function (j) {
+      open[id] = j.output || "(no output)"; render(data);
+    }).catch(function (e) { say(e.message, "err"); });
+  });
+
+  $("secrets").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var body = {}, any = false;
+    Array.prototype.forEach.call(ev.target.querySelectorAll("input"), function (i) {
+      if (i.value.trim()) { body[i.name] = i.value.trim(); any = true; }
+    });
+    if (!any) { say("Nothing to save: all boxes are empty.", "warn"); return; }
+    api("api/secrets", body).then(function (j) {
+      if (j._status >= 400) throw new Error(j.error);
+      ev.target.reset(); render(j); say("Connections saved.");
+    }).catch(function (e) { say(e.message, "err"); });
+  });
+
+  $("state-file").addEventListener("change", function (ev) {
+    var f = ev.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var parsed;
+      try { parsed = JSON.parse(reader.result); } catch (e) { say("That file isn't valid JSON.", "err"); return; }
+      if (data && data.state_exists && !confirm("Replace the " + data.cards_remembered + " cards the server remembers with this file?")) return;
+      api("api/import-state", { state: parsed }).then(function (j) {
+        if (j._status >= 400) throw new Error(j.error);
+        render(j); say("Imported: " + j.cards_remembered + " cards remembered.");
+      }).catch(function (e) { say(e.message, "err"); });
+      ev.target.value = "";
+    };
+    reader.readAsText(f);
+  });
+
+  refresh();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Trello -> Todoist page (trello-sync/app.py) at /trello-sync/, admin login
+# via nginx + toolgate. The page runs trello_to_todoist.py with its own venv.
+[Unit]
+Description=Trello to Todoist sync page
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=trellosync
+Group=trellosync
+Environment=TTS_PYTHON=/opt/trello-sync-venv/bin/python
+Environment=TTS_LISTEN=127.0.0.1:8620
+Environment=TZ=Europe/Prague
+# Tokens, saved cards, run history and settings: /var/lib/trello-sync
+StateDirectory=trello-sync
+StateDirectoryMode=0700
+ExecStart=/usr/bin/python3 /opt/vps-links/trello-sync/app.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+
+[Install]
+WantedBy=multi-user.target

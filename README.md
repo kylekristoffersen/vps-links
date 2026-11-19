@@ -34,6 +34,27 @@ The single-page tools keep their data in the browser (localStorage), so each
 device starts empty. Unseen's lists come across by importing the
 `unseen-lists.json` export once per device.
 
+## Trello -> Todoist (`trello-sync/`)
+
+https://107-173-7-177.sslip.io/trello-sync/ (admin login). A page around
+`trello_to_todoist.py` (the script from the PC's Trello Tools folder, which
+runs unchanged except that `TTS_STATE_FILE` moves its saved cards out of the
+clone): Sync now, Preview changes (`--dry-run`), automatic sync (off / 15 min /
+hourly / daily 08:00 Prague time), run history with output, the three tokens,
+and a one-time import of the PC's `synced_cards.json`.
+
+- Service `trello-sync` (`deploy/trello-sync.service`), user `trellosync`,
+  127.0.0.1:8620, stdlib only; the script runs with `/opt/trello-sync-venv`
+  (needs `requests`).
+- Data in `/var/lib/trello-sync` (mode 700): `secrets.json` (mode 600; the
+  page only ever says "saved"), `synced_cards.json`, `runs.json` (last 40
+  runs; saved tokens are masked out of the output), `settings.json`.
+- A real sync is refused until saved cards exist (import, or confirm a fresh
+  start), so the PC's 19 synced cards are not created twice.
+- Tests: `python3 trello-sync/test_app.py` (stand-in script, no API calls).
+- Only one place may run the sync: once this is in use, stop running
+  `run_sync.bat` on the PC, or both will create tasks.
+
 ## The login (toolgate)
 
 `gate/toolgate.py`, standard library only, runs as user `toolgate` on
