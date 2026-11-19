@@ -77,7 +77,8 @@ STATE_FILE = os.environ.get("TTS_STATE_FILE") or os.path.join(
 TRELLO_API = "https://api.trello.com/1"
 TODOIST_API = "https://api.todoist.com/api/v1"
 
-CARD_FIELDS = "name,due,dueComplete,url,idList,shortLink,idMembers"
+# "closed" is needed so the re-check notices archived cards.
+CARD_FIELDS = "name,due,dueComplete,url,idList,shortLink,idMembers,closed"
 
 # ------------------------------------------------------------------------
 
